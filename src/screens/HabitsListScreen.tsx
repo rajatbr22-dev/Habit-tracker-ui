@@ -1,8 +1,8 @@
 /**
- * HabitTracker – Habits List Screen
- *
- * Shows all habits with search, category filter pills,
- * streak counters, check-in buttons, and a floating "Add Habit" FAB.
+ * HabitTracker – Redesigned Habits List Screen
+ * 
+ * Matches the latest UI mockup with horizontal date picker,
+ * sectioned habit lists, and Lucide icons.
  */
 
 import React, {useState, useCallback} from 'react';
@@ -13,276 +13,255 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import {PieChart} from 'react-native-gifted-charts';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {
+  ChevronLeft,
+  Calendar,
+  Flame,
+  Plus,
+  Check,
+  ChevronDown,
+} from 'lucide-react-native';
 import {useTheme} from '../theme';
-import {BRAND_COLORS, SEMANTIC_COLORS} from '../theme/colors';
+import {BRAND_COLORS} from '../theme/colors';
 import {RADII, SHADOWS, SPACING, LAYOUT} from '../theme/spacing';
-import {DEFAULT_FILTER_CATEGORIES, CATEGORY_LABELS} from '../constants/habits';
-import type {HabitCategory} from '../constants/habits';
 
 // ──────────────────────────────────────────────
-// Types
+// Types & Mock Data
 // ──────────────────────────────────────────────
 
 interface MockHabit {
   id: string;
   name: string;
-  icon: string;
   meta: string;
-  frequency: string;
   streak: number;
   completed: boolean;
+  color: string;
 }
 
-// ──────────────────────────────────────────────
-// Mock data (matching UI designs)
-// ──────────────────────────────────────────────
-
 const MOCK_HABITS: MockHabit[] = [
-  {
-    id: '1',
-    name: 'Morning Meditation',
-    icon: '🧘',
-    meta: '10 mins',
-    frequency: 'Daily',
-    streak: 12,
-    completed: true,
-  },
-  {
-    id: '2',
-    name: 'Read 20 Pages',
-    icon: '📖',
-    meta: '20 pages',
-    frequency: 'Daily',
-    streak: 5,
-    completed: true,
-  },
-  {
-    id: '3',
-    name: 'Hydration Goal',
-    icon: '💧',
-    meta: '2.5L',
-    frequency: 'Daily',
-    streak: 28,
-    completed: true,
-  },
-  {
-    id: '4',
-    name: 'Gym Session',
-    icon: '🏋️',
-    meta: '1 hour',
-    frequency: '4x/week',
-    streak: 3,
-    completed: true,
-  },
-  {
-    id: '5',
-    name: 'Deep Work',
-    icon: '🧠',
-    meta: '2 hours',
-    frequency: 'Weekdays',
-    streak: 0,
-    completed: true,
-  },
+  { id: '1', name: 'Morning Meditation', meta: '12 Day Streak', streak: 12, completed: false, color: '#00CEC9' },
+  { id: '2', name: 'Read 20 Pages', meta: '5 Day Streak', streak: 5, completed: false, color: '#6C5CE7' },
+  { id: '3', name: 'Drink 2L Water', meta: '24 Day Streak', streak: 24, completed: true, color: '#0984E3' },
+  { id: '4', name: 'Journaling', meta: '8 Day Streak', streak: 8, completed: true, color: '#E17055' },
+  { id: '5', name: 'Vitamin Intake', meta: '45 Day Streak', streak: 45, completed: true, color: '#FDCB6E' },
+  { id: '6', name: 'Evening Walk', meta: '3 Day Streak', streak: 3, completed: true, color: '#2ECC71' },
+];
+
+const DAYS = [
+  { day: 'TH', date: 10 },
+  { day: 'FR', date: 11 },
+  { day: 'SA', date: 12 },
+  { day: 'SU', date: 13 },
+  { day: 'MO', date: 14, active: true },
+  { day: 'TU', date: 15 },
+  { day: 'WE', date: 16 },
 ];
 
 // ──────────────────────────────────────────────
 // Sub-components
 // ──────────────────────────────────────────────
 
-/** A single filter chip */
-const FilterChip: React.FC<{
-  label: string;
-  active: boolean;
-  onPress: () => void;
-}> = ({label, active, onPress}) => {
+const DatePicker: React.FC = () => {
   const {colors, typography} = useTheme();
   return (
-    <Pressable
-      onPress={onPress}
-      style={[
-        chipStyles.chip,
-        active
-          ? {backgroundColor: BRAND_COLORS.primary}
-          : {backgroundColor: colors.surfaceAlt, borderColor: colors.border, borderWidth: 1},
-      ]}>
-      <Text
-        style={[
-          typography.subheadMedium,
-          {color: active ? '#FFFFFF' : colors.text},
-        ]}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-};
-
-const chipStyles = StyleSheet.create({
-  chip: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADII.pill,
-    marginRight: SPACING.sm,
-  },
-});
-
-/** A single habit row card */
-const HabitCard: React.FC<{habit: MockHabit; onPress: () => void}> = ({habit, onPress}) => {
-  const {colors, typography} = useTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[
-        cardStyles.card,
-        {
-          backgroundColor: colors.card,
-          borderColor: colors.border,
-          ...SHADOWS.sm,
-        },
-      ]}>
-      <View style={cardStyles.left}>
-        <Text style={[typography.title3, {color: colors.text}]}>{habit.name}</Text>
-        <View style={cardStyles.metaRow}>
-          <Text style={{fontSize: 13}}>{habit.icon}</Text>
-          <Text style={[typography.footnote, {color: colors.textSecondary, marginLeft: 4}]}>
-            {habit.meta} • {habit.frequency}
-          </Text>
-        </View>
-      </View>
-
-      <View style={cardStyles.right}>
-        {/* Streak */}
-        <View style={cardStyles.streakCol}>
-          <View style={cardStyles.streakRow}>
-            <Text style={{fontSize: 13}}>🔥</Text>
-            <Text
-              style={[
-                typography.title3,
-                {color: SEMANTIC_COLORS.warning, marginLeft: 2},
-              ]}>
-              {habit.streak}
-            </Text>
-          </View>
-          <Text style={[typography.caption2, {color: colors.textSecondary}]}>day streak</Text>
-        </View>
-
-        {/* Check-in circle */}
-        <View
+    <ScrollView 
+      horizontal 
+      showsHorizontalScrollIndicator={false} 
+      contentContainerStyle={styles.datePickerContainer}
+    >
+      {DAYS.map((item, idx) => (
+        <View 
+          key={idx} 
           style={[
-            cardStyles.checkCircle,
-            {
-              backgroundColor: habit.completed
-                ? SEMANTIC_COLORS.success
-                : colors.surfaceAlt,
-              borderColor: habit.completed
-                ? SEMANTIC_COLORS.success
-                : colors.border,
-            },
-          ]}>
-          <Text style={{color: '#FFFFFF', fontSize: 16, fontWeight: '700'}}>
-            {habit.completed ? '✓' : ''}
+            styles.dateBtn, 
+            item.active && { backgroundColor: BRAND_COLORS.primary, transform: [{scale: 1.1}] }
+          ]}
+        >
+          <Text style={[typography.overline, { color: item.active ? '#FFF' : colors.textSecondary, marginBottom: 4 }]}>
+            {item.day}
+          </Text>
+          <Text style={[typography.title3, { color: item.active ? '#FFF' : colors.text, fontWeight: '700' }]}>
+            {item.date}
           </Text>
         </View>
-      </View>
-    </Pressable>
+      ))}
+    </ScrollView>
   );
 };
 
-const cardStyles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-    borderRadius: RADII.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    marginBottom: SPACING.md,
-  },
-  left: {
-    flex: 1,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: SPACING.xs,
-  },
-  right: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-  },
-  streakCol: {
-    alignItems: 'flex-end',
-  },
-  streakRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  checkCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
-
-/** Top Progress Card */
-const TodayProgress: React.FC = () => {
+const HabitCard: React.FC<{habit: MockHabit}> = ({habit}) => {
   const {colors, typography} = useTheme();
   return (
-    <View style={[progressStyles.container, {backgroundColor: '#EFEEFF'}]}>
-      <View style={progressStyles.left}>
-        <PieChart
-          donut
-          radius={45}
-          innerRadius={35}
-          data={[
-            {value: 4, color: BRAND_COLORS.primary},
-            {value: 2, color: '#DCD9FF'},
-          ]}
-          centerLabelComponent={() => (
-            <View style={{alignItems: 'center', justifyContent: 'center'}}>
-              <Text style={[typography.title2, {color: colors.text}]}>4/6</Text>
-              <Text style={[typography.caption2, {color: colors.textSecondary}]}>Done</Text>
-            </View>
-          )}
-        />
+    <View style={[styles.habitCard, { backgroundColor: colors.card, ...SHADOWS.sm }]}>
+      <View style={[styles.habitIndicator, { backgroundColor: habit.color }]} />
+      <View style={styles.habitMain}>
+        <Text style={[typography.bodyMedium, { color: colors.text }]}>{habit.name}</Text>
+        <View style={styles.habitMeta}>
+          <Flame size={12} color={BRAND_COLORS.primary} fill={BRAND_COLORS.primary} />
+          <Text style={[typography.caption1, { color: colors.textSecondary, marginLeft: 4 }]}>{habit.meta}</Text>
+        </View>
       </View>
-      <View style={progressStyles.right}>
-        <Text style={[typography.title2, {color: colors.text}]}>Almost there!</Text>
-        <Text style={[typography.subhead, {color: colors.textSecondary, marginTop: 4}]}>
-          {`Complete 2 more habits\nto reach your daily goal.`}
-        </Text>
-        <Pressable style={progressStyles.button}>
-          <Text style={[typography.subheadMedium, {color: '#FFFFFF'}]}>Keep going 🔥</Text>
-        </Pressable>
-      </View>
+      <Pressable 
+        style={[
+          styles.actionBtn, 
+          { 
+            backgroundColor: habit.completed ? '#F5F5F7' : '#FFFFFF',
+            borderColor: habit.completed ? 'transparent' : '#F0F0F0',
+            borderWidth: habit.completed ? 0 : 1
+          }
+        ]}
+      >
+        {habit.completed ? (
+          <Check size={20} color={colors.text} strokeWidth={2.5} />
+        ) : (
+          <Plus size={20} color={colors.text} strokeWidth={2} />
+        )}
+      </Pressable>
     </View>
   );
 };
 
-const progressStyles = StyleSheet.create({
+// ──────────────────────────────────────────────
+// Main Screen
+// ──────────────────────────────────────────────
+
+const HabitsListScreen: React.FC<{navigation: any}> = ({navigation}) => {
+  const {colors, typography} = useTheme();
+  const insets = useSafeAreaInsets();
+
+  const toDoHabits = MOCK_HABITS.filter(h => !h.completed);
+  const completedHabits = MOCK_HABITS.filter(h => h.completed);
+
+  return (
+    <View style={[styles.container, { backgroundColor: '#FBFCFD' }]}>
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top + SPACING.md }]}>
+        <Pressable onPress={() => navigation.goBack()}>
+          <ChevronLeft color={colors.text} size={24} />
+        </Pressable>
+        <View style={{ alignItems: 'center' }}>
+          <Text style={[typography.title3, { color: colors.text, fontWeight: '700' }]}>Today</Text>
+          <Text style={[typography.caption2, { color: colors.textSecondary }]}>Monday, 14 Mar</Text>
+        </View>
+        <Pressable>
+          <Calendar color={colors.text} size={24} />
+        </Pressable>
+      </View>
+
+      <DatePicker />
+
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Progress Card */}
+        <View style={styles.progressCard}>
+          <View style={styles.chartWrapper}>
+            <PieChart
+              donut
+              radius={45}
+              innerRadius={36}
+              data={[
+                { value: 4, color: BRAND_COLORS.primary },
+                { value: 2, color: '#DCD9FF' },
+              ]}
+              centerLabelComponent={() => (
+                <View style={{ alignItems: 'center' }}>
+                  <Text style={[typography.title2, { color: colors.text, fontWeight: '700' }]}>4/6</Text>
+                  <Text style={[typography.caption2, { color: colors.textSecondary }]}>Done</Text>
+                </View>
+              )}
+            />
+          </View>
+          <View style={styles.progressInfo}>
+            <Text style={[typography.title2, { color: colors.text, fontWeight: '700' }]}>Almost there!</Text>
+            <Text style={[typography.subhead, { color: colors.textSecondary, marginTop: 4 }]}>
+              Complete 2 more habits to reach your daily goal.
+            </Text>
+            <Pressable style={styles.keepGoingBtn}>
+              <Text style={[typography.subheadMedium, { color: '#FFF' }]}>Keep going 🔥</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* To Do List */}
+        <View style={styles.sectionHeader}>
+          <Text style={[typography.bodyMedium, { color: colors.textSecondary }]}>To Do</Text>
+          <Text style={[typography.caption1, { color: colors.textSecondary }]}>{toDoHabits.length} Remaining</Text>
+        </View>
+        {toDoHabits.map((habit) => (
+          <HabitCard key={habit.id} habit={habit} />
+        ))}
+
+        {/* Completed List */}
+        <View style={[styles.sectionHeader, { marginTop: SPACING.xl }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <ChevronDown size={16} color={colors.textSecondary} />
+            <Text style={[typography.bodyMedium, { color: colors.textSecondary, marginLeft: 8 }]}>Completed</Text>
+          </View>
+        </View>
+        {completedHabits.map((habit) => (
+          <HabitCard key={habit.id} habit={habit} />
+        ))}
+      </ScrollView>
+
+      {/* FAB */}
+      <Pressable 
+        style={[styles.fab, SHADOWS.xl]} 
+        onPress={() => navigation.navigate('AddHabit')}
+      >
+        <Plus color="#FFF" size={20} strokeWidth={3} />
+        <Text style={[typography.buttonSmall, { color: '#FFF', marginLeft: 8 }]}>New Habit</Text>
+      </Pressable>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
   container: {
-    marginHorizontal: LAYOUT.screenPaddingHorizontal,
-    padding: SPACING.lg,
-    borderRadius: RADII.xl,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.xl,
-  },
-  left: {
-    marginRight: SPACING.lg,
-  },
-  right: {
     flex: 1,
   },
-  button: {
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.md,
+  },
+  datePickerContainer: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    gap: SPACING.md,
+  },
+  dateBtn: {
+    width: 48,
+    height: 64,
+    borderRadius: 24,
+    backgroundColor: '#F5F5F7',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scrollContent: {
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: 100,
+  },
+  progressCard: {
+    flexDirection: 'row',
+    backgroundColor: '#EFEEFF',
+    borderRadius: RADII.xl,
+    padding: SPACING.lg,
+    alignItems: 'center',
+    marginBottom: SPACING.xl,
+    marginTop: SPACING.md,
+  },
+  chartWrapper: {
+    marginRight: SPACING.lg,
+  },
+  progressInfo: {
+    flex: 1,
+  },
+  keepGoingBtn: {
     backgroundColor: BRAND_COLORS.primary,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
@@ -290,224 +269,49 @@ const progressStyles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginTop: SPACING.md,
   },
-});
-
-// ──────────────────────────────────────────────
-// HabitsListScreen
-// ──────────────────────────────────────────────
-
-interface HabitsListScreenProps {
-  navigation?: any;
-}
-
-const HabitsListScreen: React.FC<HabitsListScreenProps> = ({navigation}) => {
-  const {colors, typography} = useTheme();
-  const insets = useSafeAreaInsets();
-
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState<HabitCategory>('all');
-
-  const filteredHabits = MOCK_HABITS.filter(h => {
-    const matchesSearch = h.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = activeCategory === 'all' || 
-      h.name.toLowerCase().includes(activeCategory.toLowerCase()) || // Very simple mapping for mock data
-      (activeCategory === 'morning' && h.name === 'Morning Meditation') ||
-      (activeCategory === 'health' && (h.name === 'Hydration Goal' || h.name === 'Gym Session')) ||
-      (activeCategory === 'daily' && h.frequency === 'Daily') ||
-      (activeCategory === 'work' && h.name === 'Deep Work');
-    
-    return matchesSearch && matchesCategory;
-  });
-
-  const renderHabit = useCallback(
-    ({item}: {item: MockHabit}) => (
-      <HabitCard 
-        habit={item} 
-        onPress={() => navigation?.navigate?.('HabitDetail', {habitId: item.id})} 
-      />
-    ),
-    [navigation],
-  );
-
-  const keyExtractor = useCallback((item: MockHabit) => item.id, []);
-
-  return (
-    <View style={[styles.container, {backgroundColor: colors.background}]}>
-      {/* ── Header ── */}
-      <View
-        style={[
-          styles.headerBar,
-          {paddingTop: insets.top + SPACING.md},
-        ]}>
-        <Text style={[typography.largeTitle, {color: colors.text}]}>My Habits</Text>
-        <Pressable hitSlop={12}>
-          <Text style={{fontSize: 20, color: colors.textSecondary}}>☰</Text>
-        </Pressable>
-      </View>
-
-      {/* ── Today Progress Card ── */}
-      <TodayProgress />
-
-      {/* ── Search Bar ── */}
-      <View
-        style={[
-          styles.searchBar,
-          {
-            backgroundColor: colors.surfaceAlt,
-            borderColor: colors.border,
-          },
-        ]}>
-        <Text style={{fontSize: 16, color: colors.textSecondary, marginRight: SPACING.sm}}>
-          🔍
-        </Text>
-        <TextInput
-          style={[styles.searchInput, {...typography.body, color: colors.text}]}
-          placeholder="Search habits..."
-          placeholderTextColor={colors.textTertiary}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-        <Text style={{fontSize: 16, color: colors.textSecondary}}>🎤</Text>
-      </View>
-
-      {/* ── Category Filters ── */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterRow}
-        style={styles.filterScroll}>
-        {DEFAULT_FILTER_CATEGORIES.map(cat => (
-          <FilterChip
-            key={cat}
-            label={CATEGORY_LABELS[cat]}
-            active={activeCategory === cat}
-            onPress={() => setActiveCategory(cat)}
-          />
-        ))}
-      </ScrollView>
-
-      {/* ── Section Header ── */}
-      <View style={styles.sectionHeader}>
-        <Text
-          style={[
-            typography.overline,
-            {color: colors.textSecondary, textTransform: 'uppercase'},
-          ]}>
-          ACTIVE HABITS
-        </Text>
-        <Text style={[typography.caption1, {color: colors.textSecondary}]}>Swipe to edit</Text>
-      </View>
-
-      {/* ── Habit List ── */}
-      <FlatList
-        data={filteredHabits}
-        renderItem={renderHabit}
-        keyExtractor={keyExtractor}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        ListFooterComponent={
-          <Pressable
-            style={[
-              styles.archivedRow,
-              {borderTopColor: colors.border},
-            ]}>
-            <View style={styles.archivedLeft}>
-              <Text style={{fontSize: 14, color: colors.textSecondary}}>📦</Text>
-              <Text
-                style={[
-                  typography.body,
-                  {color: colors.text, marginLeft: SPACING.sm},
-                ]}>
-                Archived Habits
-              </Text>
-            </View>
-            <Text style={{fontSize: 16, color: colors.textSecondary}}>›</Text>
-          </Pressable>
-        }
-      />
-
-      {/* ── FAB ── */}
-      <Pressable
-        style={({pressed}) => [
-          styles.fab,
-          {
-            backgroundColor: pressed
-              ? BRAND_COLORS.primaryDark
-              : BRAND_COLORS.primary,
-            bottom: insets.bottom + SPACING.xl,
-            ...SHADOWS.xl,
-          },
-        ]}
-        onPress={() => navigation?.navigate?.('AddHabit')}>
-        <Text style={{color: '#FFFFFF', fontSize: 20, fontWeight: '600', marginRight: 6}}>+</Text>
-        <Text style={[typography.buttonSmall, {color: '#FFFFFF'}]}>Add Habit</Text>
-      </Pressable>
-    </View>
-  );
-};
-
-// ──────────────────────────────────────────────
-// Styles
-// ──────────────────────────────────────────────
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  headerBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: LAYOUT.screenPaddingHorizontal,
-    paddingBottom: SPACING.md,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: LAYOUT.screenPaddingHorizontal,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
-    borderRadius: RADII.sm,
-    borderWidth: 1,
-    marginBottom: SPACING.md,
-  },
-  searchInput: {
-    flex: 1,
-    padding: 0,
-  },
-  filterScroll: {
-    flexGrow: 0,
-    marginBottom: SPACING.md,
-  },
-  filterRow: {
-    paddingHorizontal: LAYOUT.screenPaddingHorizontal,
-  },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: LAYOUT.screenPaddingHorizontal,
     marginBottom: SPACING.md,
+    marginTop: SPACING.md,
   },
-  listContent: {
-    paddingHorizontal: LAYOUT.screenPaddingHorizontal,
-    paddingBottom: 100, // space for FAB
-  },
-  archivedRow: {
+  habitCard: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: SPACING.lg,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    marginTop: SPACING.sm,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADII.lg,
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
   },
-  archivedLeft: {
+  habitIndicator: {
+    width: 4,
+    height: 32,
+    borderRadius: 2,
+    marginRight: SPACING.md,
+  },
+  habitMain: {
+    flex: 1,
+  },
+  habitMeta: {
     flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  actionBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   fab: {
     position: 'absolute',
-    alignSelf: 'center',
+    bottom: SPACING.xl,
+    right: SPACING.lg,
+    backgroundColor: BRAND_COLORS.primary,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: SPACING.xl,

@@ -9,3 +9,5 @@ export {default as HabitsListScreen} from './HabitsListScreen';
 export {default as AddHabitScreen} from './AddHabitScreen';
 export {default as AnalyticsScreen} from './AnalyticsScreen';
 export {default as HabitDetailScreen} from './HabitDetailScreen';
+export {default as SettingsScreen} from './SettingsScreen';
+export {default as OnboardingScreen} from './OnboardingScreen';

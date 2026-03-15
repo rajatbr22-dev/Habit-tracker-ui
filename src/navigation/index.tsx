@@ -20,6 +20,8 @@ import {
   AddHabitScreen,
   AnalyticsScreen,
   HabitDetailScreen,
+  SettingsScreen,
+  OnboardingScreen,
 } from '../screens';
 
 // ──────────────────────────────────────────────
@@ -38,8 +40,6 @@ const AuthNavigator: React.FC = () => (
 // ──────────────────────────────────────────────
 // Main Tab Stack
 // ──────────────────────────────────────────────
-
-const PlaceholderSettings: React.FC = () => <View style={{flex: 1}} />;
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -68,7 +68,7 @@ const MainTabNavigator: React.FC = () => (
     />
     <Tab.Screen
       name="Settings"
-      component={PlaceholderSettings}
+      component={SettingsScreen}
       options={{
         tabBarLabel: 'Profile',
         tabBarIcon: ({color}) => <Text style={{color, fontSize: 20}}>👤</Text>,
@@ -84,8 +84,9 @@ const MainTabNavigator: React.FC = () => (
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 const RootNavigator: React.FC = () => (
-  <RootStack.Navigator screenOptions={{headerShown: false, animation: 'fade'}}>
+  <RootStack.Navigator screenOptions={{headerShown: false, animation: 'fade'}} initialRouteName="Onboarding">
     <RootStack.Screen name="Splash" component={SplashScreen} />
+    <RootStack.Screen name="Onboarding" component={OnboardingScreen} />
     <RootStack.Screen name="Auth" component={AuthNavigator} />
     <RootStack.Screen name="Main" component={MainTabNavigator} />
     <RootStack.Screen name="HabitDetail" component={HabitDetailScreen} />

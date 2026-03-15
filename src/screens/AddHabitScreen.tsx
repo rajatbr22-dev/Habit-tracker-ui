@@ -12,6 +12,14 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../theme';
 import {BRAND_COLORS, HABIT_PALETTE} from '../theme/colors';
 import {RADII, SHADOWS, SPACING, LAYOUT} from '../theme/spacing';
+import { 
+  Bell, 
+  Calendar, 
+  Archive, 
+  Check, 
+  Plus, 
+  Minus 
+} from 'lucide-react-native';
 
 const AddHabitScreen: React.FC<{navigation: any}> = ({navigation}) => {
   const {colors, typography} = useTheme();
@@ -19,7 +27,7 @@ const AddHabitScreen: React.FC<{navigation: any}> = ({navigation}) => {
 
   const [habitName, setHabitName] = useState('');
   const [selectedIcon, setSelectedIcon] = useState('🧘');
-  const [selectedColor, setSelectedColor] = useState(HABIT_PALETTE[0]);
+  const [selectedColor, setSelectedColor] = useState<typeof HABIT_PALETTE[number]>(HABIT_PALETTE[0]);
   const [frequency, setFrequency] = useState<'Daily' | 'Weekly' | 'Custom'>('Daily');
   const [dailyGoal, setDailyGoal] = useState(1);
   const [remindersEnabled, setRemindersEnabled] = useState(false);
@@ -33,7 +41,7 @@ const AddHabitScreen: React.FC<{navigation: any}> = ({navigation}) => {
         <Pressable onPress={() => navigation.goBack()}>
           <Text style={[typography.body, {color: colors.textSecondary}]}>Cancel</Text>
         </Pressable>
-        <Text style={[typography.headline, {fontWeight: '700', color: colors.text}]}>New Habit</Text>
+        <Text style={[typography.title2, {fontWeight: '700', color: colors.text}]}>New Habit</Text>
         <Pressable onPress={() => navigation.goBack()}>
           <Text style={[typography.bodyMedium, {color: colors.text}]}>Save</Text>
         </Pressable>
@@ -91,7 +99,7 @@ const AddHabitScreen: React.FC<{navigation: any}> = ({navigation}) => {
                 ]}
               >
                 {selectedColor === color ? (
-                  <Text style={{color: '#FFF', fontWeight: 'bold'}}>✓</Text>
+                  <Check size={16} color="#FFF" strokeWidth={3} />
                 ) : null}
               </Pressable>
             ))}
@@ -130,14 +138,14 @@ const AddHabitScreen: React.FC<{navigation: any}> = ({navigation}) => {
               onPress={() => setDailyGoal(Math.max(1, dailyGoal - 1))}
               style={[styles.counterBtn, {borderColor: BRAND_COLORS.primary}]}
             >
-              <Text style={{fontSize: 18, color: BRAND_COLORS.primary}}>−</Text>
+              <Minus size={18} color={BRAND_COLORS.primary} strokeWidth={3} />
             </Pressable>
             <Text style={[typography.title2, {color: colors.text, marginHorizontal: SPACING.lg}]}>{dailyGoal}</Text>
             <Pressable 
               onPress={() => setDailyGoal(dailyGoal + 1)}
               style={[styles.counterBtn, {backgroundColor: BRAND_COLORS.primary}]}
             >
-              <Text style={{fontSize: 18, color: '#FFF'}}>+</Text>
+              <Plus size={18} color="#FFF" strokeWidth={3} />
             </Pressable>
           </View>
         </View>
@@ -148,18 +156,18 @@ const AddHabitScreen: React.FC<{navigation: any}> = ({navigation}) => {
            <Switch 
             value={remindersEnabled} 
             onValueChange={setRemindersEnabled} 
-            trackColor={{true: BRAND_COLORS.primary}}
+            trackColor={{true: colors.primary}}
            />
         </View>
 
         <View style={[styles.reminderCard, {backgroundColor: colors.surfaceAlt}]}>
            <View style={styles.timeLabel}>
               <View style={[styles.bellIcon, {backgroundColor: BRAND_COLORS.primaryUltraLight}]}>
-                <Text style={{fontSize: 14}}>🔔</Text>
+                <Bell size={16} color={BRAND_COLORS.primary} fill={BRAND_COLORS.primary} />
               </View>
               <Text style={[typography.body, {color: colors.text, marginLeft: SPACING.md}]}>08:00 AM</Text>
            </View>
-           <Text style={{fontSize: 18}}>📅</Text>
+           <Calendar size={20} color={colors.textSecondary} />
         </View>
 
         {/* Notes */}
@@ -176,8 +184,8 @@ const AddHabitScreen: React.FC<{navigation: any}> = ({navigation}) => {
 
         {/* Archive Habit Button */}
         <Pressable style={styles.archiveBtn}>
-          <Text style={{fontSize: 16, marginRight: 8}}>📥</Text>
-          <Text style={[typography.body, {color: colors.text}]}>Archive Habit</Text>
+          <Archive size={18} color={colors.textSecondary} style={{marginRight: 8}} />
+          <Text style={[typography.body, {color: colors.textSecondary}]}>Archive Habit</Text>
         </Pressable>
       </ScrollView>
     </View>

@@ -9,6 +9,13 @@ import {
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {LineChart, BarChart} from 'react-native-gifted-charts';
+import { 
+  Calendar,
+  CheckCircle,
+  Flame,
+  TrendingUp,
+  Info
+} from 'lucide-react-native';
 import {useTheme} from '../theme';
 import {BRAND_COLORS, SEMANTIC_COLORS} from '../theme/colors';
 import {RADII, SHADOWS, SPACING, LAYOUT} from '../theme/spacing';
@@ -47,7 +54,8 @@ const AnalyticsScreen: React.FC = () => {
       <View style={styles.header}>
         <Text style={[typography.largeTitle, {color: colors.text}]}>Analytics</Text>
         <Pressable style={[styles.dateSelector, {backgroundColor: colors.surfaceAlt, borderColor: colors.border}]}>
-          <Text style={[typography.subheadMedium, {color: colors.text}]}>📅 Last 30 Days</Text>
+          <Calendar size={14} color={colors.text} style={{marginRight: 6}} />
+          <Text style={[typography.subheadMedium, {color: colors.text}]}>Last 30 Days</Text>
         </Pressable>
       </View>
 
@@ -59,21 +67,21 @@ const AnalyticsScreen: React.FC = () => {
       <View style={styles.statsGrid}>
         <View style={[styles.statCard, {backgroundColor: colors.card, ...SHADOWS.sm}]}>
           <View style={styles.statHeader}>
-            <Text style={{fontSize: 14}}>✅</Text>
+            <CheckCircle size={14} color={colors.success} />
             <Text style={[typography.caption1, {color: colors.textSecondary, marginLeft: 4}]}>Completion</Text>
           </View>
           <Text style={[typography.title1, {color: colors.text}]}>84%</Text>
         </View>
         <View style={[styles.statCard, {backgroundColor: colors.card, ...SHADOWS.sm}]}>
           <View style={styles.statHeader}>
-            <Text style={{fontSize: 14}}>🔥</Text>
+            <Flame size={14} color={SEMANTIC_COLORS.warning} />
             <Text style={[typography.caption1, {color: colors.textSecondary, marginLeft: 4}]}>Best Streak</Text>
           </View>
           <Text style={[typography.title1, {color: colors.text}]}>12d</Text>
         </View>
         <View style={[styles.statCard, {backgroundColor: colors.card, ...SHADOWS.sm}]}>
           <View style={styles.statHeader}>
-            <Text style={{fontSize: 14}}>📈</Text>
+            <TrendingUp size={14} color={colors.primary} />
             <Text style={[typography.caption1, {color: colors.textSecondary, marginLeft: 4}]}>Global Rank</Text>
           </View>
           <Text style={[typography.title1, {color: colors.text}]}>Top 5%</Text>
@@ -84,7 +92,7 @@ const AnalyticsScreen: React.FC = () => {
       <View style={[styles.chartContainer, {backgroundColor: colors.card, ...SHADOWS.sm}]}>
         <View style={styles.chartHeader}>
           <Text style={[typography.title2, {color: colors.text}]}>Completion Trend</Text>
-          <Text style={{fontSize: 16, color: colors.textSecondary}}>ⓘ</Text>
+          <Info size={16} color={colors.textSecondary} />
         </View>
         
         <View style={styles.chartWrapper}>
@@ -110,10 +118,10 @@ const AnalyticsScreen: React.FC = () => {
           />
         </View>
 
-        <View style={styles.chartFooter}>
+        <View style={[styles.chartFooter, {borderTopColor: colors.border}]}>
           <View style={styles.footerItem}>
             <Text style={[typography.caption2, {color: colors.textSecondary}]}>This Week</Text>
-            <Text style={[typography.subheadMedium, {color: SEMANTIC_COLORS.success}]}>+12%</Text>
+            <Text style={[typography.subheadMedium, {color: colors.success}]}>+12%</Text>
           </View>
           <View style={styles.footerItem}>
             <Text style={[typography.caption2, {color: colors.textSecondary}]}>Avg Daily</Text>
@@ -158,7 +166,7 @@ const AnalyticsScreen: React.FC = () => {
                  <Text style={[typography.bodyMedium, {color: colors.text}]}>{item.name}</Text>
                  <Text style={[typography.caption2, {color: colors.textSecondary}]}>{`${Math.round(item.progress * 100)}% completion`}</Text>
               </View>
-              <View style={styles.progressBarBg}>
+              <View style={[styles.progressBarBg, {backgroundColor: colors.surfaceAlt}]}>
                 <View style={[styles.progressBarFill, {width: `${item.progress * 100}%`, backgroundColor: item.color}]} />
               </View>
            </View>
@@ -225,7 +233,6 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xl,
     paddingTop: SPACING.md,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#EEEEEE',
   },
   footerItem: {
     alignItems: 'center',
@@ -245,7 +252,6 @@ const styles = StyleSheet.create({
   progressBarBg: {
     width: 80,
     height: 6,
-    backgroundColor: '#F0F0F0',
     borderRadius: 3,
     overflow: 'hidden',
   },
