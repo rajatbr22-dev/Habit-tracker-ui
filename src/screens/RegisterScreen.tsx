@@ -308,7 +308,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({navigation}) => {
               styles.socialButton,
               {backgroundColor: colors.socialButton, borderColor: colors.socialButtonBorder},
             ]}>
-            <Text style={[styles.socialIcon, {fontSize: 18}]}></Text>
+            <Text style={[styles.socialIcon, {fontSize: 18}]}>A</Text>
             <Text style={[typography.subheadMedium, {color: colors.text}]}>Apple</Text>
           </Pressable>
         </View>

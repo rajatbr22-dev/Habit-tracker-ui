@@ -16,6 +16,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import {PieChart} from 'react-native-gifted-charts';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../theme';
 import {BRAND_COLORS, SEMANTIC_COLORS} from '../theme/colors';
@@ -130,10 +131,11 @@ const chipStyles = StyleSheet.create({
 });
 
 /** A single habit row card */
-const HabitCard: React.FC<{habit: MockHabit}> = ({habit}) => {
+const HabitCard: React.FC<{habit: MockHabit; onPress: () => void}> = ({habit, onPress}) => {
   const {colors, typography} = useTheme();
   return (
-    <View
+    <Pressable
+      onPress={onPress}
       style={[
         cardStyles.card,
         {
@@ -186,7 +188,7 @@ const HabitCard: React.FC<{habit: MockHabit}> = ({habit}) => {
           </Text>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 };
 
@@ -230,6 +232,66 @@ const cardStyles = StyleSheet.create({
   },
 });
 
+/** Top Progress Card */
+const TodayProgress: React.FC = () => {
+  const {colors, typography} = useTheme();
+  return (
+    <View style={[progressStyles.container, {backgroundColor: '#EFEEFF'}]}>
+      <View style={progressStyles.left}>
+        <PieChart
+          donut
+          radius={45}
+          innerRadius={35}
+          data={[
+            {value: 4, color: BRAND_COLORS.primary},
+            {value: 2, color: '#DCD9FF'},
+          ]}
+          centerLabelComponent={() => (
+            <View style={{alignItems: 'center', justifyContent: 'center'}}>
+              <Text style={[typography.title2, {color: colors.text}]}>4/6</Text>
+              <Text style={[typography.caption2, {color: colors.textSecondary}]}>Done</Text>
+            </View>
+          )}
+        />
+      </View>
+      <View style={progressStyles.right}>
+        <Text style={[typography.title2, {color: colors.text}]}>Almost there!</Text>
+        <Text style={[typography.subhead, {color: colors.textSecondary, marginTop: 4}]}>
+          {`Complete 2 more habits\nto reach your daily goal.`}
+        </Text>
+        <Pressable style={progressStyles.button}>
+          <Text style={[typography.subheadMedium, {color: '#FFFFFF'}]}>Keep going 🔥</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+};
+
+const progressStyles = StyleSheet.create({
+  container: {
+    marginHorizontal: LAYOUT.screenPaddingHorizontal,
+    padding: SPACING.lg,
+    borderRadius: RADII.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.xl,
+  },
+  left: {
+    marginRight: SPACING.lg,
+  },
+  right: {
+    flex: 1,
+  },
+  button: {
+    backgroundColor: BRAND_COLORS.primary,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADII.md,
+    alignSelf: 'flex-start',
+    marginTop: SPACING.md,
+  },
+});
+
 // ──────────────────────────────────────────────
 // HabitsListScreen
 // ──────────────────────────────────────────────
@@ -245,13 +307,26 @@ const HabitsListScreen: React.FC<HabitsListScreenProps> = ({navigation}) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<HabitCategory>('all');
 
-  const filteredHabits = MOCK_HABITS.filter(h =>
-    h.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const filteredHabits = MOCK_HABITS.filter(h => {
+    const matchesSearch = h.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = activeCategory === 'all' || 
+      h.name.toLowerCase().includes(activeCategory.toLowerCase()) || // Very simple mapping for mock data
+      (activeCategory === 'morning' && h.name === 'Morning Meditation') ||
+      (activeCategory === 'health' && (h.name === 'Hydration Goal' || h.name === 'Gym Session')) ||
+      (activeCategory === 'daily' && h.frequency === 'Daily') ||
+      (activeCategory === 'work' && h.name === 'Deep Work');
+    
+    return matchesSearch && matchesCategory;
+  });
 
   const renderHabit = useCallback(
-    ({item}: {item: MockHabit}) => <HabitCard habit={item} />,
-    [],
+    ({item}: {item: MockHabit}) => (
+      <HabitCard 
+        habit={item} 
+        onPress={() => navigation?.navigate?.('HabitDetail', {habitId: item.id})} 
+      />
+    ),
+    [navigation],
   );
 
   const keyExtractor = useCallback((item: MockHabit) => item.id, []);
@@ -269,6 +344,9 @@ const HabitsListScreen: React.FC<HabitsListScreenProps> = ({navigation}) => {
           <Text style={{fontSize: 20, color: colors.textSecondary}}>☰</Text>
         </Pressable>
       </View>
+
+      {/* ── Today Progress Card ── */}
+      <TodayProgress />
 
       {/* ── Search Bar ── */}
       <View

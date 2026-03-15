@@ -14,7 +14,9 @@ export type RootStackParamList = {
   Splash: undefined;
   Onboarding: undefined;
   Auth: NavigatorScreenParams<AuthStackParamList>;
-  Main: NavigatorScreenParams<MainTabParamList>;
+  Main: undefined;
+  HabitDetail: {habitId: string};
+  AddHabit: undefined;
 };
 
 export type AuthStackParamList = {
