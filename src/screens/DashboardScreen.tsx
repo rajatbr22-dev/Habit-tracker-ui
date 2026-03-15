@@ -50,10 +50,13 @@ const WEEK_DAYS = [
 // Sub-components
 // ──────────────────────────────────────────────
 
-const HabitCard = ({item}: {item: typeof TODAY_HABITS[0]}) => {
+const HabitCard = ({item, onPress}: {item: typeof TODAY_HABITS[0], onPress: () => void}) => {
   const {colors, typography} = useTheme();
   return (
-    <View style={[styles.habitCard, {backgroundColor: colors.card, ...SHADOWS.sm}]}>
+    <Pressable 
+      onPress={onPress}
+      style={[styles.habitCard, {backgroundColor: colors.card, ...SHADOWS.sm}]}
+    >
       <View style={styles.chartContainer}>
         <PieChart
           donut
@@ -89,7 +92,7 @@ const HabitCard = ({item}: {item: typeof TODAY_HABITS[0]}) => {
           <Check size={16} color={item.progress === 1 ? '#FFF' : colors.textTertiary} strokeWidth={3} />
         </Pressable>
       </View>
-    </View>
+    </Pressable>
   );
 };
 
@@ -141,7 +144,12 @@ const DashboardScreen: React.FC<{navigation: any}> = ({navigation}) => {
 
         <FlatList
           data={TODAY_HABITS}
-          renderItem={({item}) => <HabitCard item={item} />}
+          renderItem={({item}) => (
+            <HabitCard 
+              item={item} 
+              onPress={() => navigation.navigate('HabitDetail', {habitId: item.id})}
+            />
+          )}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.habitsList}

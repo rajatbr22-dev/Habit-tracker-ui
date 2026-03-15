@@ -133,15 +133,17 @@ const CategoryPill = ({
 
 const HabitCard = ({
   habit, 
-  onToggle
+  onToggle,
+  onPress
 }: {
   habit: Habit; 
   onToggle: () => void;
+  onPress: () => void;
 }) => {
   const {colors, typography} = useTheme();
   return (
     <View style={[styles.habitCard, {backgroundColor: colors.card, ...SHADOWS.sm}]}>
-      <View style={styles.habitMain}>
+      <Pressable onPress={onPress} style={styles.habitMain}>
         <View style={styles.habitPrimaryInfo}>
           <Text style={[typography.bodyMedium, {color: colors.text, fontWeight: '700'}]}>
             {habit.name}
@@ -165,7 +167,7 @@ const HabitCard = ({
             day streak
           </Text>
         </View>
-      </View>
+      </Pressable>
 
       <Pressable
         onPress={onToggle}
@@ -269,6 +271,7 @@ const HabitsListScreen: React.FC<{navigation: any}> = ({navigation}) => {
             key={habit.id}
             habit={habit}
             onToggle={() => toggleHabit(habit.id)}
+            onPress={() => navigation.navigate('HabitDetail', {habitId: habit.id})}
           />
         ))}
 
