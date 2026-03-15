@@ -17,6 +17,7 @@ export type RootStackParamList = {
   Main: undefined;
   HabitDetail: {habitId: string};
   AddHabit: undefined;
+  Paywall: undefined;
 };
 
 export type AuthStackParamList = {

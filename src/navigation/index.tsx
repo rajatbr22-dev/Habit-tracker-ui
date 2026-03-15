@@ -23,6 +23,7 @@ import {
   SettingsScreen,
   OnboardingScreen,
   DashboardScreen,
+  PaywallScreen,
 } from '../screens';
 
 // ──────────────────────────────────────────────
@@ -100,6 +101,7 @@ const RootNavigator: React.FC = () => (
     <RootStack.Screen name="Main" component={MainTabNavigator} />
     <RootStack.Screen name="HabitDetail" component={HabitDetailScreen} />
     <RootStack.Screen name="AddHabit" component={AddHabitScreen} />
+    <RootStack.Screen name="Paywall" component={PaywallScreen} />
   </RootStack.Navigator>
 );
 
