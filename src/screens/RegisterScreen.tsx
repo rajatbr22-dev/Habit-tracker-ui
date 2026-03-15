@@ -1,8 +1,7 @@
 /**
  * HabitTracker – Register Screen
  *
- * Create-account form with display name, email, password,
- * T&C checkbox, social logins, and link to Login.
+ * Create-account form with validation, social logins, and Lucide icons.
  */
 
 import React, {useState} from 'react';
@@ -17,9 +16,34 @@ import {
   View,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useForm, Controller} from 'react-hook-form';
+import {zodResolver} from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import {
+  Eye,
+  EyeOff,
+  Apple,
+  Chrome,
+  UserPlus,
+  CheckCircle2,
+  Circle,
+} from 'lucide-react-native';
 import {useTheme} from '../theme';
 import {BRAND_COLORS} from '../theme/colors';
-import {RADII, SPACING} from '../theme/spacing';
+import {RADII, SHADOWS, SPACING} from '../theme/spacing';
+
+// ──────────────────────────────────────────────
+// Validation Schema
+// ──────────────────────────────────────────────
+
+const registerSchema = z.object({
+  displayName: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().min(1, 'Email is required').email('Invalid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  agreedToTerms: z.boolean().refine(val => val === true, 'You must agree to the terms'),
+});
+
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
 // ──────────────────────────────────────────────
 // Mini Logo Component
@@ -56,62 +80,30 @@ const logoStyles = StyleSheet.create({
 });
 
 // ──────────────────────────────────────────────
-// Checkbox
-// ──────────────────────────────────────────────
-
-const Checkbox: React.FC<{checked: boolean; onToggle: () => void}> = ({
-  checked,
-  onToggle,
-}) => (
-  <Pressable
-    onPress={onToggle}
-    style={[
-      checkboxStyles.box,
-      checked && {backgroundColor: BRAND_COLORS.primary, borderColor: BRAND_COLORS.primary},
-    ]}
-    hitSlop={8}>
-    {checked && <Text style={checkboxStyles.tick}>✓</Text>}
-  </Pressable>
-);
-
-const checkboxStyles = StyleSheet.create({
-  box: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: '#C7C7CC',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tick: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '700',
-    marginTop: -1,
-  },
-});
-
-// ──────────────────────────────────────────────
 // RegisterScreen
 // ──────────────────────────────────────────────
 
-interface RegisterScreenProps {
-  navigation?: any;
-}
-
-const RegisterScreen: React.FC<RegisterScreenProps> = ({navigation}) => {
+const RegisterScreen: React.FC<{navigation: any}> = ({navigation}) => {
   const {colors, typography} = useTheme();
   const insets = useSafeAreaInsets();
-
-  const [displayName, setDisplayName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [secureText, setSecureText] = useState(true);
-  const [agreedToTerms, setAgreedToTerms] = useState(true);
 
-  const handleCreateAccount = () => {
-    // placeholder — will integrate auth later
+  const {
+    control,
+    handleSubmit,
+    formState: {errors},
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      displayName: '',
+      email: '',
+      password: '',
+      agreedToTerms: true,
+    },
+  });
+
+  const onSubmit = (data: RegisterFormValues) => {
+    console.log('Register form data:', data);
     if (navigation) {
       navigation.replace('Main');
     }
@@ -125,7 +117,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({navigation}) => {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.flex, {backgroundColor: colors.background}]}
+      style={[styles.flex, {backgroundColor: '#FFF'}]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
         contentContainerStyle={[
@@ -134,202 +126,210 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({navigation}) => {
         ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
+        
         {/* ── Header ── */}
         <View style={styles.header}>
           <MiniLogo />
-          <Text
-            style={[
-              styles.centered,
-              {...typography.title1, color: colors.text, marginTop: SPACING.md},
-            ]}>
+          <Text style={[styles.centered, typography.title1, {color: '#1A1A2E', marginTop: SPACING.md, fontWeight: '800'}]}>
             HabitTracker
           </Text>
-          <Text
-            style={[
-              styles.centered,
-              {...typography.subhead, color: colors.textSecondary, marginTop: SPACING.xs},
-            ]}>
+          <Text style={[styles.centered, typography.subhead, {color: '#52527A', marginTop: SPACING.xs}]}>
             Join 10,000+ users building better habits
           </Text>
         </View>
 
         {/* ── Tab Toggle ── */}
-        <View
-          style={[
-            styles.tabToggle,
-            {backgroundColor: colors.surfaceAlt, borderColor: colors.border},
-          ]}>
+        <View style={[styles.tabToggle, {backgroundColor: '#F8F9FE'}]}>
           <Pressable style={styles.tab} onPress={goToLogin}>
-            <Text style={[typography.subheadMedium, {color: colors.textSecondary}]}>Sign in</Text>
+            <Text style={[typography.subheadMedium, {color: '#8E8E93'}]}>Sign in</Text>
           </Pressable>
-          <View style={[styles.tab, styles.tabActive, {borderBottomColor: BRAND_COLORS.primary}]}>
-            <Text style={[typography.subheadMedium, {color: colors.text}]}>Create account</Text>
+          <View style={[styles.tab, styles.tabActive]}>
+            <Text style={[typography.subheadMedium, {color: BRAND_COLORS.primary, fontWeight: '700'}]}>Create account</Text>
           </View>
         </View>
 
         {/* ── Form ── */}
         <View style={styles.form}>
           {/* Display Name */}
-          <Text style={[styles.label, {...typography.footnote, color: colors.textSecondary}]}>
+          <Text style={[styles.label, typography.footnote, {color: '#8E8E93'}]}>
             Display Name
           </Text>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                ...typography.body,
-                color: colors.text,
-                backgroundColor: colors.surfaceAlt,
-                borderColor: colors.border,
-              },
-            ]}
-            placeholder="Alex Johnson"
-            placeholderTextColor={colors.textTertiary}
-            autoCapitalize="words"
-            value={displayName}
-            onChangeText={setDisplayName}
+          <Controller
+            control={control}
+            name="displayName"
+            render={({field: {onChange, onBlur, value}}) => (
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: '#F9FAFB',
+                    borderColor: errors.displayName ? colors.error : '#F0F0F0',
+                  },
+                ]}
+                placeholder="Alex Johnson"
+                placeholderTextColor="#AEAEB2"
+                autoCapitalize="words"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+              />
+            )}
           />
+          {errors.displayName && (
+            <Text style={styles.errorText}>{errors.displayName.message}</Text>
+          )}
 
           {/* Email */}
-          <Text
-            style={[
-              styles.label,
-              {...typography.footnote, color: colors.textSecondary, marginTop: SPACING.lg},
-            ]}>
+          <Text style={[styles.label, typography.footnote, {color: '#8E8E93', marginTop: SPACING.lg}]}>
             Email Address
           </Text>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                ...typography.body,
-                color: colors.text,
-                backgroundColor: colors.surfaceAlt,
-                borderColor: colors.border,
-              },
-            ]}
-            placeholder="alex@example.com"
-            placeholderTextColor={colors.textTertiary}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            value={email}
-            onChangeText={setEmail}
+          <Controller
+            control={control}
+            name="email"
+            render={({field: {onChange, onBlur, value}}) => (
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: '#F9FAFB',
+                    borderColor: errors.email ? colors.error : '#F0F0F0',
+                  },
+                ]}
+                placeholder="alex@example.com"
+                placeholderTextColor="#AEAEB2"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+              />
+            )}
           />
+          {errors.email && (
+            <Text style={styles.errorText}>{errors.email.message}</Text>
+          )}
 
           {/* Password */}
-          <Text
-            style={[
-              styles.label,
-              {...typography.footnote, color: colors.textSecondary, marginTop: SPACING.lg},
-            ]}>
+          <Text style={[styles.label, typography.footnote, {color: '#8E8E93', marginTop: SPACING.lg}]}>
             Password
           </Text>
           <View style={styles.passwordRow}>
-            <TextInput
-              style={[
-                styles.input,
-                styles.passwordInput,
-                {
-                  ...typography.body,
-                  color: colors.text,
-                  backgroundColor: colors.surfaceAlt,
-                  borderColor: colors.border,
-                },
-              ]}
-              placeholder="Create a strong password"
-              placeholderTextColor={colors.textTertiary}
-              secureTextEntry={secureText}
-              autoCapitalize="none"
-              value={password}
-              onChangeText={setPassword}
+            <Controller
+              control={control}
+              name="password"
+              render={({field: {onChange, onBlur, value}}) => (
+                <TextInput
+                  style={[
+                    styles.input,
+                    styles.passwordInput,
+                    {
+                      backgroundColor: '#F9FAFB',
+                      borderColor: errors.password ? colors.error : '#F0F0F0',
+                    },
+                  ]}
+                  placeholder="Create a strong password"
+                  placeholderTextColor="#AEAEB2"
+                  secureTextEntry={secureText}
+                  autoCapitalize="none"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                />
+              )}
             />
             <Pressable
               style={styles.eyeButton}
               onPress={() => setSecureText(!secureText)}
               hitSlop={12}>
-              <Text style={{fontSize: 18, color: colors.textSecondary}}>
-                {secureText ? '👁️‍🗨️' : '👁️'}
-              </Text>
+              {secureText ? (
+                <EyeOff size={20} color="#AEAEB2" />
+              ) : (
+                <Eye size={20} color={BRAND_COLORS.primary} />
+              )}
             </Pressable>
           </View>
+          {errors.password && (
+            <Text style={styles.errorText}>{errors.password.message}</Text>
+          )}
 
           {/* Terms Checkbox */}
-          <View style={styles.termsRow}>
-            <Checkbox checked={agreedToTerms} onToggle={() => setAgreedToTerms(!agreedToTerms)} />
-            <Text style={[typography.subhead, {color: colors.textSecondary, marginLeft: SPACING.sm, flex: 1}]}>
-              I agree to the{' '}
-              <Text style={{color: BRAND_COLORS.primary, fontWeight: '600'}}>
-                Terms of Service
-              </Text>
-            </Text>
-          </View>
+          <Controller
+            control={control}
+            name="agreedToTerms"
+            render={({field: {onChange, value}}) => (
+              <View style={styles.termsRow}>
+                <Pressable onPress={() => onChange(!value)} style={styles.checkboxWrapper}>
+                  {value ? (
+                    <CheckCircle2 size={24} color={BRAND_COLORS.primary} fill={BRAND_COLORS.primaryUltraLight} />
+                  ) : (
+                    <Circle size={24} color="#C7C7CC" />
+                  )}
+                </Pressable>
+                <Text style={[typography.subhead, {color: '#52527A', marginLeft: 12, flex: 1}]}>
+                  I agree to the{' '}
+                  <Text style={{color: BRAND_COLORS.primary, fontWeight: '700'}}>
+                    Terms of Service
+                  </Text>
+                </Text>
+              </View>
+            )}
+          />
+          {errors.agreedToTerms && (
+            <Text style={styles.errorText}>{errors.agreedToTerms.message}</Text>
+          )}
         </View>
 
         {/* ── CTA ── */}
         <Pressable
           style={({pressed}) => [
             styles.cta,
+            SHADOWS.md,
             {
-              backgroundColor: pressed
-                ? BRAND_COLORS.primaryDark
-                : BRAND_COLORS.primary,
+              backgroundColor: pressed ? BRAND_COLORS.primaryDark : BRAND_COLORS.primary,
             },
           ]}
-          onPress={handleCreateAccount}>
-          <Text style={[typography.button, {color: '#FFFFFF'}]}>Create Account</Text>
+          onPress={handleSubmit(onSubmit)}>
+          <View style={styles.ctaContent}>
+            <Text style={[typography.button, {color: '#FFFFFF', fontWeight: '800'}]}>Create Account</Text>
+            <UserPlus size={18} color="#FFF" style={{marginLeft: 8}} />
+          </View>
         </Pressable>
 
         {/* ── Divider ── */}
         <View style={styles.divider}>
-          <View style={[styles.dividerLine, {backgroundColor: colors.border}]} />
-          <Text
-            style={[
-              styles.dividerText,
-              {...typography.caption1, color: colors.textSecondary},
-            ]}>
+          <View style={styles.dividerLine} />
+          <Text style={[styles.dividerText, typography.caption1, {color: '#8E8E93'}]}>
             or continue with
           </Text>
-          <View style={[styles.dividerLine, {backgroundColor: colors.border}]} />
+          <View style={styles.dividerLine} />
         </View>
 
         {/* ── Social Buttons ── */}
         <View style={styles.socialRow}>
-          <Pressable
-            style={[
-              styles.socialButton,
-              {backgroundColor: colors.socialButton, borderColor: colors.socialButtonBorder},
-            ]}>
-            <Text style={styles.socialIcon}>G</Text>
-            <Text style={[typography.subheadMedium, {color: colors.text}]}>Google</Text>
+          <Pressable style={styles.socialButton}>
+            <Chrome size={20} color="#1A1A2E" />
+            <Text style={[typography.subheadMedium, {color: '#1A1A2E', fontWeight: '700'}]}>Google</Text>
           </Pressable>
-          <Pressable
-            style={[
-              styles.socialButton,
-              {backgroundColor: colors.socialButton, borderColor: colors.socialButtonBorder},
-            ]}>
-            <Text style={[styles.socialIcon, {fontSize: 18}]}>A</Text>
-            <Text style={[typography.subheadMedium, {color: colors.text}]}>Apple</Text>
+          <Pressable style={styles.socialButton}>
+            <Apple size={20} color="#1A1A2E" fill="#1A1A2E" />
+            <Text style={[typography.subheadMedium, {color: '#1A1A2E', fontWeight: '700'}]}>Apple</Text>
           </Pressable>
         </View>
 
         {/* ── Bottom Link ── */}
         <View style={styles.bottomLink}>
-          <Text style={[typography.subhead, {color: colors.textSecondary}]}>
+          <Text style={[typography.subhead, {color: '#8E8E93'}]}>
             Already have an account?{' '}
           </Text>
           <Pressable onPress={goToLogin}>
-            <Text style={[typography.subheadMedium, {color: BRAND_COLORS.primary}]}>Sign in</Text>
+            <Text style={[typography.subheadMedium, {color: BRAND_COLORS.primary, fontWeight: '700'}]}>Sign in</Text>
           </Pressable>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 };
-
-// ──────────────────────────────────────────────
-// Styles
-// ──────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   flex: {flex: 1},
@@ -343,41 +343,46 @@ const styles = StyleSheet.create({
   centered: {textAlign: 'center'},
   tabToggle: {
     flexDirection: 'row',
-    borderRadius: RADII.pill,
-    borderWidth: 1,
-    overflow: 'hidden',
+    borderRadius: 16,
+    padding: 4,
     marginBottom: SPACING['2xl'],
   },
   tab: {
     flex: 1,
-    paddingVertical: SPACING.md,
+    paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 12,
   },
   tabActive: {
-    borderBottomWidth: 2,
+    backgroundColor: '#FFF',
+    ...SHADOWS.sm,
   },
   form: {
     marginBottom: SPACING.xl,
   },
   label: {
-    marginBottom: SPACING.xs,
+    marginBottom: 8,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   input: {
     borderWidth: 1,
-    borderRadius: RADII.sm,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: Platform.OS === 'ios' ? 14 : 12,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: Platform.OS === 'ios' ? 16 : 12,
+    fontSize: 16,
+    color: '#1A1A2E',
   },
   passwordRow: {
     position: 'relative',
   },
   passwordInput: {
-    paddingRight: 50,
+    paddingRight: 54,
   },
   eyeButton: {
     position: 'absolute',
-    right: 14,
+    right: 16,
     top: 0,
     bottom: 0,
     justifyContent: 'center',
@@ -385,13 +390,27 @@ const styles = StyleSheet.create({
   termsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: SPACING.xl,
+    marginTop: 24,
+  },
+  checkboxWrapper: {
+    padding: 2,
+  },
+  errorText: {
+    color: '#FF3B30', // Fallback error red
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+    fontWeight: '600',
   },
   cta: {
-    borderRadius: RADII.sm,
-    paddingVertical: 16,
+    borderRadius: 16,
+    paddingVertical: 18,
     alignItems: 'center',
     marginBottom: SPACING.xl,
+  },
+  ctaContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   divider: {
     flexDirection: 'row',
@@ -400,14 +419,15 @@ const styles = StyleSheet.create({
   },
   dividerLine: {
     flex: 1,
-    height: StyleSheet.hairlineWidth,
+    height: 1,
+    backgroundColor: '#F0F0F0',
   },
   dividerText: {
-    marginHorizontal: SPACING.md,
+    marginHorizontal: 16,
   },
   socialRow: {
     flexDirection: 'row',
-    gap: SPACING.md,
+    gap: 16,
     marginBottom: SPACING['3xl'],
   },
   socialButton: {
@@ -416,13 +436,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderRadius: RADII.sm,
+    borderColor: '#F0F0F0',
+    borderRadius: 16,
     paddingVertical: 14,
-    gap: SPACING.sm,
-  },
-  socialIcon: {
-    fontSize: 16,
-    fontWeight: '700',
+    gap: 10,
+    backgroundColor: '#FFF',
   },
   bottomLink: {
     flexDirection: 'row',
