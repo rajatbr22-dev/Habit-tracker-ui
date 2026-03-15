@@ -22,6 +22,7 @@ import {
   HabitDetailScreen,
   SettingsScreen,
   OnboardingScreen,
+  DashboardScreen,
 } from '../screens';
 
 // ──────────────────────────────────────────────
@@ -50,6 +51,14 @@ const MainTabNavigator: React.FC = () => (
       tabBarActiveTintColor: '#6C5CE7',
       tabBarInactiveTintColor: '#8E8E93',
     }}>
+    <Tab.Screen
+      name="Dashboard"
+      component={DashboardScreen}
+      options={{
+        tabBarLabel: 'Home',
+        tabBarIcon: ({color}) => <Text style={{color, fontSize: 20}}>🏠</Text>,
+      }}
+    />
     <Tab.Screen
       name="Habits"
       component={HabitsListScreen}
