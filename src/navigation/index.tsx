@@ -94,7 +94,7 @@ const MainTabNavigator: React.FC = () => (
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 const RootNavigator: React.FC = () => (
-  <RootStack.Navigator screenOptions={{headerShown: false, animation: 'fade'}} initialRouteName="Onboarding">
+  <RootStack.Navigator screenOptions={{headerShown: false, animation: 'fade'}} initialRouteName="Splash">
     <RootStack.Screen name="Splash" component={SplashScreen} />
     <RootStack.Screen name="Onboarding" component={OnboardingScreen} />
     <RootStack.Screen name="Auth" component={AuthNavigator} />

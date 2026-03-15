@@ -115,7 +115,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({navigation}) => {
     // Auto-navigate after 2.5s
     const timer = setTimeout(() => {
       if (navigation) {
-        navigation.replace('Auth');
+        navigation.replace('Onboarding');
       }
     }, 2500);
 

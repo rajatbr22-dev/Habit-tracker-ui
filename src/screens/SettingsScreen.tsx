@@ -196,7 +196,7 @@ const SettingsScreen: React.FC<{navigation: any}> = ({navigation}) => {
         </View>
 
         {/* Sign Out */}
-        <Pressable style={styles.signOutBtn}>
+        <Pressable style={styles.signOutBtn} onPress={() => navigation.navigate('Auth')}>
           <Text style={styles.signOutText}>Sign Out</Text>
         </Pressable>
 
