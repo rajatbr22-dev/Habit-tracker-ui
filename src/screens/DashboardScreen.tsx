@@ -25,10 +25,6 @@ import {RADII, SHADOWS, SPACING, LAYOUT} from '../theme/spacing';
 
 const {width} = Dimensions.get('window');
 
-// ──────────────────────────────────────────────
-// Mock Data
-// ──────────────────────────────────────────────
-
 const TODAY_HABITS = [
   {id: '1', name: 'Meditation', streak: 12, progress: 0.7, color: '#6C5CE7'},
   {id: '2', name: 'Drink Water', streak: 5, progress: 0.4, color: '#0984E3'},
@@ -46,9 +42,6 @@ const WEEK_DAYS = [
   {day: 'S', status: 'pending'},
 ];
 
-// ──────────────────────────────────────────────
-// Sub-components
-// ──────────────────────────────────────────────
 
 const HabitCard = ({item, onPress}: {item: typeof TODAY_HABITS[0], onPress: () => void}) => {
   const {colors, typography} = useTheme();
@@ -111,9 +104,6 @@ const StatCard = ({title, value, icon: Icon, color}: any) => {
   );
 };
 
-// ──────────────────────────────────────────────
-// Main Screen
-// ──────────────────────────────────────────────
 
 const DashboardScreen: React.FC<{navigation: any}> = ({navigation}) => {
   const {colors, typography} = useTheme();
@@ -123,7 +113,7 @@ const DashboardScreen: React.FC<{navigation: any}> = ({navigation}) => {
     <View style={[styles.container, {backgroundColor: colors.background}]}>
       {/* Header */}
       <View style={[styles.header, {paddingTop: insets.top + SPACING.md}]}>
-        <View>
+        <View style={styles.headerText}>
           <Text style={[typography.title1, {color: colors.text, fontWeight: '800'}]}>Good morning,</Text>
           <Text style={[typography.title1, {color: BRAND_COLORS.primary, fontWeight: '800'}]}>Alex</Text>
         </View>
@@ -137,9 +127,12 @@ const DashboardScreen: React.FC<{navigation: any}> = ({navigation}) => {
         {/* Today's Habits Section */}
         <View style={styles.sectionHeader}>
           <Text style={[typography.title3, {color: colors.text, fontWeight: '700'}]}>Today's Habits</Text>
-          <Pressable>
+
+          <Pressable> 
+            {/* need to add here navigation to the all habit screen */}
             <Text style={[typography.subheadMedium, {color: BRAND_COLORS.primary}]}>See all</Text>
           </Pressable>
+
         </View>
 
         <FlatList
@@ -158,7 +151,7 @@ const DashboardScreen: React.FC<{navigation: any}> = ({navigation}) => {
 
         {/* This Week Section */}
         <View style={styles.sectionHeader}>
-          <Text style={[typography.title3, {color: colors.text, fontWeight: '700'}]}>This Week</Text>
+          <Text style={[typography.title3, {color: colors.text, fontWeight: '700', flex: 1}]}>This Week</Text>
         </View>
         <View style={[styles.weekRow, {backgroundColor: colors.card, ...SHADOWS.sm}]}>
           {WEEK_DAYS.map((item, idx) => (
@@ -192,7 +185,7 @@ const DashboardScreen: React.FC<{navigation: any}> = ({navigation}) => {
           <StatCard title="Completion" value="92%" icon={Target} color="#0984E3" />
         </View>
 
-        {/* AI Tip Card */}
+        {/* AI Tip Card - This is only for premium users */}
         <View style={[styles.aiCard, {backgroundColor: BRAND_COLORS.primary}]}>
           <View style={styles.aiHeader}>
             <Sparkles size={18} color="#FFF" />
@@ -226,6 +219,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xl,
     paddingBottom: SPACING.md,
   },
+  headerText: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+  },
   notifBtn: {
     width: 44,
     height: 44,
@@ -256,6 +255,7 @@ const styles = StyleSheet.create({
   },
   habitsList: {
     paddingHorizontal: SPACING.xl,
+    paddingBottom: SPACING.xs,
     gap: SPACING.md,
   },
   habitCard: {

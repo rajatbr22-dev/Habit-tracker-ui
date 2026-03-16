@@ -2,6 +2,9 @@
  * HabitTracker – Auth Types
  */
 
+import z from "zod";
+import { loginSchema, registerSchema } from "../schema/auth.scehma";
+
 export interface User {
   id: string;
   email: string;
@@ -46,3 +49,8 @@ export interface AuthResponse {
   user: User;
   tokens: AuthTokens;
 }
+
+
+export type LoginFormValues = z.infer<typeof loginSchema>;
+
+export type RegisterFormValues = z.infer<typeof registerSchema>;

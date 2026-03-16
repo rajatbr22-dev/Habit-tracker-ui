@@ -226,7 +226,12 @@ const HabitsListScreen: React.FC<{navigation: any}> = ({navigation}) => {
         </Pressable>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={styles.scrollContent} 
+        keyboardShouldPersistTaps="always"
+        keyboardDismissMode="on-drag"
+      >
         {/* Search Bar */}
         <View style={[styles.searchContainer, {backgroundColor: colors.surfaceAlt}]}>
           <Search size={20} color={colors.textTertiary} />
@@ -237,7 +242,7 @@ const HabitsListScreen: React.FC<{navigation: any}> = ({navigation}) => {
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
-          <Mic size={20} color={colors.textTertiary} />
+          {/* <Mic size={20} color={colors.textTertiary} /> */}
         </View>
 
         {/* Category Filters */}

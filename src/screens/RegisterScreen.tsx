@@ -1,9 +1,3 @@
-/**
- * HabitTracker – Register Screen
- *
- * Create-account form with validation, social logins, and Lucide icons.
- */
-
 import React, {useState} from 'react';
 import {
   KeyboardAvoidingView,
@@ -18,7 +12,6 @@ import {
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useForm, Controller} from 'react-hook-form';
 import {zodResolver} from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import {
   Eye,
   EyeOff,
@@ -30,24 +23,9 @@ import {
 } from 'lucide-react-native';
 import {useTheme} from '../theme';
 import {BRAND_COLORS} from '../theme/colors';
-import {RADII, SHADOWS, SPACING} from '../theme/spacing';
-
-// ──────────────────────────────────────────────
-// Validation Schema
-// ──────────────────────────────────────────────
-
-const registerSchema = z.object({
-  displayName: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().min(1, 'Email is required').email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  agreedToTerms: z.boolean().refine(val => val === true, 'You must agree to the terms'),
-});
-
-type RegisterFormValues = z.infer<typeof registerSchema>;
-
-// ──────────────────────────────────────────────
-// Mini Logo Component
-// ──────────────────────────────────────────────
+import {SHADOWS, SPACING} from '../theme/spacing';
+import { RegisterFormValues } from '../types/auth';
+import { registerSchema } from '../schema/auth.scehma';
 
 const MiniLogo: React.FC = () => (
   <View style={logoStyles.container}>
@@ -78,10 +56,6 @@ const logoStyles = StyleSheet.create({
   starSmall: {width: 9, height: 9, borderRadius: 1, top: 32, left: 18},
   starTiny: {width: 6, height: 6, borderRadius: 1, top: 34, left: 36},
 });
-
-// ──────────────────────────────────────────────
-// RegisterScreen
-// ──────────────────────────────────────────────
 
 const RegisterScreen: React.FC<{navigation: any}> = ({navigation}) => {
   const {colors, typography} = useTheme();
@@ -152,7 +126,7 @@ const RegisterScreen: React.FC<{navigation: any}> = ({navigation}) => {
         <View style={styles.form}>
           {/* Display Name */}
           <Text style={[styles.label, typography.footnote, {color: '#8E8E93'}]}>
-            Display Name
+            Name
           </Text>
           <Controller
             control={control}
@@ -291,7 +265,7 @@ const RegisterScreen: React.FC<{navigation: any}> = ({navigation}) => {
           ]}
           onPress={handleSubmit(onSubmit)}>
           <View style={styles.ctaContent}>
-            <Text style={[typography.button, {color: '#FFFFFF', fontWeight: '800'}]}>Create Account</Text>
+            <Text style={[typography.button, {fontWeight: '800', color: '#FFF' }]}>Sign Up</Text>
             <UserPlus size={18} color="#FFF" style={{marginLeft: 8}} />
           </View>
         </Pressable>
@@ -411,6 +385,7 @@ const styles = StyleSheet.create({
   ctaContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: "center"
   },
   divider: {
     flexDirection: 'row',
