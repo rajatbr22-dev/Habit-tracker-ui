@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useMemo} from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -7,43 +7,110 @@ import {
   Pressable,
   TextInput,
   Switch,
+  Platform,
+  Modal,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useForm, Controller} from 'react-hook-form';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import {zodResolver} from '@hookform/resolvers/zod';
+import {z} from 'zod';
 import {useTheme} from '../theme';
 import {BRAND_COLORS, HABIT_PALETTE} from '../theme/colors';
 import {RADII, SHADOWS, SPACING, LAYOUT} from '../theme/spacing';
 import { 
-  Bell, 
-  Calendar, 
+  Bell,
   Archive, 
   Check, 
   Plus, 
-  Minus 
+  Minus,
+  ChevronLeft,
+  Smile,
+  Clock,
 } from 'lucide-react-native';
+
+const habitSchema = z.object({
+  name: z.string().min(1, 'Habit name is required').max(24, 'Max 24 characters'),
+  icon: z.string().min(1, 'Icon is required'),
+  color: z.string(),
+  frequency: z.enum(['Daily', 'Weekly', 'Custom']),
+  daysOfWeek: z.array(z.number()).optional(),
+  interval: z.number().min(1).optional(),
+  goal: z.number().min(1),
+  remindersEnabled: z.boolean(),
+  reminderTime: z.date(),
+  notes: z.string().optional(),
+});
+
+type HabitFormData = z.infer<typeof habitSchema>;
+
+const ICONS = ['🧘', '💧', '🏋️', '📖', '⚙️', '🌙', '☕'];
+
+const EMOJI_CATEGORIES = [
+  {name: 'Mindfulness', emojis: ['🧘', '🧘‍♀️', '🧘‍♂️', '🕯️', '✨', '☁️', '🌊']},
+  {name: 'Health', emojis: ['💧', '🍎', '🥦', '💊', '🥗', '🥑', '🍋']},
+  {name: 'Fitness', emojis: ['🏋️', '🏃', '🚴', '🏊', '🥊', '⚽', '🏀']},
+  {name: 'Productivity', emojis: ['📖', '✍️', '💻', '💡', '📅', '🎯', '⌛']},
+  {name: 'Growth', emojis: ['⚙️', '📈', '🌱', '🚀', '🧠', '🛠️', '🧱']},
+  {name: 'Leisure', emojis: ['🌙', '☕', '🍵', '🎨', '🎸', '🎮', '📸']},
+];
 
 const AddHabitScreen: React.FC<{navigation: any}> = ({navigation}) => {
   const {colors, typography} = useTheme();
   const insets = useSafeAreaInsets();
 
-  const [habitName, setHabitName] = useState('');
-  const [selectedIcon, setSelectedIcon] = useState('🧘');
-  const [selectedColor, setSelectedColor] = useState<typeof HABIT_PALETTE[number]>(HABIT_PALETTE[0]);
-  const [frequency, setFrequency] = useState<'Daily' | 'Weekly' | 'Custom'>('Daily');
-  const [dailyGoal, setDailyGoal] = useState(1);
-  const [remindersEnabled, setRemindersEnabled] = useState(false);
+  const [showEmojiInput, setShowEmojiInput] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
-  const icons = ['🧘', '💧', '🏋️', '📖', '⚙️', '🌙', '☕'];
+  const {
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: {errors, isValid},
+  } = useForm<HabitFormData>({
+    resolver: zodResolver(habitSchema),
+    defaultValues: {
+      name: '',
+      icon: '🧘',
+      color: HABIT_PALETTE[0],
+      frequency: 'Daily',
+      daysOfWeek: [1, 2, 3, 4, 5], // Default Mon-Fri
+      interval: 2,
+      goal: 1,
+      remindersEnabled: false,
+      reminderTime: new Date(new Date().setHours(8, 0, 0, 0)),
+      notes: '',
+    },
+  });
+
+  const frequency = watch('frequency');
+  const selectedIcon = watch('icon');
+  const selectedColor = watch('color');
+  const dailyGoal = watch('goal');
+  const remindersEnabled = watch('remindersEnabled');
+  const reminderTime = watch('reminderTime');
+  const habitName = watch('name');
+  const daysOfWeek = watch('daysOfWeek') || [];
+  const interval = watch('interval') || 2;
+
+  const onSubmit = (data: HabitFormData) => {
+    console.log('Habit Data:', data);
+    navigation.goBack();
+  };
+
+  const isCustomIcon = !ICONS.includes(selectedIcon);
 
   return (
     <View style={[styles.container, {backgroundColor: colors.background}]}>
       {/* Header */}
       <View style={[styles.header, {paddingTop: insets.top + SPACING.md}]}>
-        <Pressable onPress={() => navigation.goBack()}>
-          <Text style={[typography.body, {color: colors.textSecondary}]}>Cancel</Text>
+        <Pressable onPress={() => navigation.goBack()} style={styles.headerBtn}>
+          <ChevronLeft size={24} color={colors.text} />
         </Pressable>
         <Text style={[typography.title2, {fontWeight: '700', color: colors.text}]}>New Habit</Text>
-        <Pressable onPress={() => navigation.goBack()}>
-          <Text style={[typography.bodyMedium, {color: colors.text}]}>Save</Text>
+        <Pressable onPress={handleSubmit(onSubmit)} style={styles.headerBtn}>
+          <Text style={[typography.bodyMedium, {color: isValid ? BRAND_COLORS.primary : colors.textTertiary, fontWeight: '700'}]}>Save</Text>
         </Pressable>
       </View>
 
@@ -52,14 +119,31 @@ const AddHabitScreen: React.FC<{navigation: any}> = ({navigation}) => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[typography.overline, {color: colors.textSecondary}]}>HABIT NAME</Text>
-            <Text style={[typography.caption2, {color: colors.textSecondary}]}>{`${habitName.length}/24`}</Text>
+            <Text style={[typography.caption2, {color: errors.name ? colors.error : colors.textSecondary}]}>
+              {`${habitName.length}/24`}
+            </Text>
           </View>
-          <TextInput
-            style={[styles.input, {backgroundColor: colors.surfaceAlt, color: colors.text, ...typography.body}]}
-            placeholder="e.g. Morning Meditation"
-            placeholderTextColor={colors.textTertiary}
-            value={habitName}
-            onChangeText={(text) => setHabitName(text.slice(0, 24))}
+          <Controller
+            control={control}
+            name="name"
+            render={({field: {onChange, value}}) => (
+              <TextInput
+                style={[
+                  styles.input, 
+                  {
+                    backgroundColor: colors.surfaceAlt, 
+                    color: colors.text, 
+                    ...typography.body,
+                    borderColor: errors.name ? colors.error : 'transparent',
+                    borderWidth: errors.name ? 1 : 0,
+                  }
+                ]}
+                placeholder="e.g. Morning Meditation"
+                placeholderTextColor={colors.textTertiary}
+                value={value}
+                onChangeText={(text) => onChange(text.slice(0, 24))}
+              />
+            )}
           />
         </View>
 
@@ -67,10 +151,13 @@ const AddHabitScreen: React.FC<{navigation: any}> = ({navigation}) => {
         <View style={styles.section}>
           <Text style={[typography.overline, {color: colors.textSecondary, marginBottom: SPACING.md}]}>ICON</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.iconRow}>
-            {icons.map((icon) => (
+            {ICONS.map((icon) => (
               <Pressable
                 key={icon}
-                onPress={() => setSelectedIcon(icon)}
+                onPress={() => {
+                  setValue('icon', icon);
+                  setShowEmojiInput(false);
+                }}
                 style={[
                   styles.iconOption,
                   {
@@ -82,6 +169,18 @@ const AddHabitScreen: React.FC<{navigation: any}> = ({navigation}) => {
                 <Text style={{fontSize: 20}}>{icon}</Text>
               </Pressable>
             ))}
+            <Pressable
+              onPress={() => setShowEmojiInput(true)}
+              style={[
+                styles.iconOption,
+                {
+                  backgroundColor: isCustomIcon ? BRAND_COLORS.primaryUltraLight : colors.surfaceAlt,
+                  borderColor: isCustomIcon ? BRAND_COLORS.primary : 'transparent',
+                },
+              ]}
+            >
+              <Smile size={20} color={colors.textSecondary} />
+            </Pressable>
           </ScrollView>
         </View>
 
@@ -92,7 +191,7 @@ const AddHabitScreen: React.FC<{navigation: any}> = ({navigation}) => {
             {HABIT_PALETTE.map((color) => (
               <Pressable
                 key={color}
-                onPress={() => setSelectedColor(color)}
+                onPress={() => setValue('color', color)}
                 style={[
                   styles.colorOption,
                   {backgroundColor: color},
@@ -109,11 +208,11 @@ const AddHabitScreen: React.FC<{navigation: any}> = ({navigation}) => {
         {/* Frequency */}
         <View style={styles.section}>
           <Text style={[typography.overline, {color: colors.textSecondary, marginBottom: SPACING.md}]}>FREQUENCY</Text>
-          <View style={[styles.tabContainer, {backgroundColor: colors.surfaceAlt}]}>
+          <View style={[styles.tabContainer, {backgroundColor: colors.surfaceAlt, marginBottom: SPACING.md}]}>
             {(['Daily', 'Weekly', 'Custom'] as const).map((tab) => (
               <Pressable
                 key={tab}
-                onPress={() => setFrequency(tab)}
+                onPress={() => setValue('frequency', tab)}
                 style={[
                   styles.tab,
                   frequency === tab && {backgroundColor: BRAND_COLORS.primary, ...SHADOWS.sm},
@@ -125,24 +224,87 @@ const AddHabitScreen: React.FC<{navigation: any}> = ({navigation}) => {
               </Pressable>
             ))}
           </View>
+
+          {frequency === 'Weekly' && (
+            <View style={styles.daySelector}>
+              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => {
+                const isSelected = daysOfWeek.includes(index);
+                return (
+                  <Pressable
+                    key={`${day}-${index}`}
+                    onPress={() => {
+                      const newDays = isSelected
+                        ? daysOfWeek.filter((d) => d !== index)
+                        : [...daysOfWeek, index];
+                      setValue('daysOfWeek', newDays);
+                    }}
+                    style={[
+                      styles.dayBubble,
+                      {
+                        backgroundColor: isSelected ? BRAND_COLORS.primary : colors.surfaceAlt,
+                        borderColor: isSelected ? BRAND_COLORS.primary : 'transparent',
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        typography.caption1,
+                        {color: isSelected ? '#FFF' : colors.textSecondary, fontWeight: '700'},
+                      ]}
+                    >
+                      {day}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
+
+          {frequency === 'Custom' && (
+            <View style={[styles.customInterval, {backgroundColor: colors.surfaceAlt}]}>
+              <Text style={[typography.body, {color: colors.text}]}>Every</Text>
+              <View style={styles.intervalControls}>
+                <Pressable
+                  onPress={() => setValue('interval', Math.max(1, interval - 1))}
+                  style={[styles.intervalBtn, {borderColor: colors.border}]}
+                >
+                  <Minus size={16} color={colors.text} />
+                </Pressable>
+                <Text style={[typography.title3, {color: colors.text, marginHorizontal: SPACING.md}]}>
+                  {interval}
+                </Text>
+                <Pressable
+                  onPress={() => setValue('interval', interval + 1)}
+                  style={[styles.intervalBtn, {borderColor: colors.border}]}
+                >
+                  <Plus size={16} color={colors.text} />
+                </Pressable>
+              </View>
+              <Text style={[typography.body, {color: colors.text}]}>days</Text>
+            </View>
+          )}
         </View>
 
-        {/* Daily Goal */}
+        {/* Goal */}
         <View style={[styles.goalCard, {backgroundColor: colors.surfaceAlt}]}>
           <View>
-            <Text style={[typography.title3, {color: colors.text}]}>Daily Goal</Text>
-            <Text style={[typography.caption1, {color: colors.textSecondary}]}>Times per day</Text>
+            <Text style={[typography.title3, {color: colors.text}]}>
+              {frequency === 'Daily' ? 'Daily Goal' : frequency === 'Weekly' ? 'Weekly Goal' : 'Custom Goal'}
+            </Text>
+            <Text style={[typography.caption1, {color: colors.textSecondary}]}>
+              {frequency === 'Daily' ? 'Times per day' : frequency === 'Weekly' ? 'Times per week' : 'Times per period'}
+            </Text>
           </View>
           <View style={styles.counter}>
             <Pressable 
-              onPress={() => setDailyGoal(Math.max(1, dailyGoal - 1))}
+              onPress={() => setValue('goal', Math.max(1, dailyGoal - 1))}
               style={[styles.counterBtn, {borderColor: BRAND_COLORS.primary}]}
             >
               <Minus size={18} color={BRAND_COLORS.primary} strokeWidth={3} />
             </Pressable>
             <Text style={[typography.title2, {color: colors.text, marginHorizontal: SPACING.lg}]}>{dailyGoal}</Text>
             <Pressable 
-              onPress={() => setDailyGoal(dailyGoal + 1)}
+              onPress={() => setValue('goal', dailyGoal + 1)}
               style={[styles.counterBtn, {backgroundColor: BRAND_COLORS.primary}]}
             >
               <Plus size={18} color="#FFF" strokeWidth={3} />
@@ -153,32 +315,53 @@ const AddHabitScreen: React.FC<{navigation: any}> = ({navigation}) => {
         {/* Reminders */}
         <View style={styles.reminderRow}>
            <Text style={[typography.overline, {color: colors.textSecondary}]}>REMINDERS</Text>
-           <Switch 
-            value={remindersEnabled} 
-            onValueChange={setRemindersEnabled} 
-            trackColor={{true: colors.primary}}
+           <Controller
+            control={control}
+            name="remindersEnabled"
+            render={({field: {onChange, value}}) => (
+              <Switch 
+                value={value} 
+                onValueChange={onChange} 
+                trackColor={{true: BRAND_COLORS.primary}}
+              />
+            )}
            />
         </View>
 
-        <View style={[styles.reminderCard, {backgroundColor: colors.surfaceAlt}]}>
-           <View style={styles.timeLabel}>
-              <View style={[styles.bellIcon, {backgroundColor: BRAND_COLORS.primaryUltraLight}]}>
-                <Bell size={16} color={BRAND_COLORS.primary} fill={BRAND_COLORS.primary} />
-              </View>
-              <Text style={[typography.body, {color: colors.text, marginLeft: SPACING.md}]}>08:00 AM</Text>
-           </View>
-           <Calendar size={20} color={colors.textSecondary} />
-        </View>
+        {remindersEnabled && (
+          <Pressable 
+            style={[styles.reminderCard, {backgroundColor: colors.surfaceAlt}]}
+            onPress={() => setShowTimePicker(true)}
+          >
+            <View style={styles.timeLabel}>
+                <View style={[styles.bellIcon, {backgroundColor: BRAND_COLORS.primaryUltraLight}]}>
+                  <Bell size={16} color={BRAND_COLORS.primary} fill={BRAND_COLORS.primary} />
+                </View>
+                <Text style={[typography.body, {color: colors.text, marginLeft: SPACING.md}]}>
+                  {reminderTime.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: true})}
+                </Text>
+            </View>
+            <Clock size={20} color={colors.textSecondary} />
+          </Pressable>
+        )}
 
         {/* Notes */}
         <View style={styles.section}>
           <Text style={[typography.overline, {color: colors.textSecondary, marginBottom: SPACING.md}]}>NOTES</Text>
-          <TextInput
-            multiline
-            numberOfLines={4}
-            style={[styles.notesInput, {backgroundColor: colors.surfaceAlt, color: colors.text, ...typography.body}]}
-            placeholder="Add a motivating thought..."
-            placeholderTextColor={colors.textTertiary}
+          <Controller
+            control={control}
+            name="notes"
+            render={({field: {onChange, value}}) => (
+              <TextInput
+                multiline
+                numberOfLines={4}
+                style={[styles.notesInput, {backgroundColor: colors.surfaceAlt, color: colors.text, ...typography.body}]}
+                placeholder="Add a motivating thought..."
+                placeholderTextColor={colors.textTertiary}
+                value={value}
+                onChangeText={onChange}
+              />
+            )}
           />
         </View>
 
@@ -188,6 +371,64 @@ const AddHabitScreen: React.FC<{navigation: any}> = ({navigation}) => {
           <Text style={[typography.body, {color: colors.textSecondary}]}>Archive Habit</Text>
         </Pressable>
       </ScrollView>
+
+      {/* Time Picker */}
+      {showTimePicker && (
+        <DateTimePicker
+          value={reminderTime}
+          mode="time"
+          is24Hour={false}
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={(event, selectedDate) => {
+            setShowTimePicker(false);
+            if (selectedDate) {
+              setValue('reminderTime', selectedDate);
+            }
+          }}
+        />
+      )}
+
+      {/* Categorized Emoji Picker Modal */}
+      <Modal visible={showEmojiInput} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, {backgroundColor: colors.card, height: '60%'}]}>
+            <View style={styles.modalHeader}>
+              <Text style={[typography.title3, {color: colors.text}]}>Choose Icon</Text>
+              <Pressable onPress={() => setShowEmojiInput(false)} style={styles.closeBtn}>
+                <Text style={[typography.bodyMedium, {color: BRAND_COLORS.primary}]}>Done</Text>
+              </Pressable>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {EMOJI_CATEGORIES.map((category) => (
+                <View key={category.name} style={styles.emojiCategory}>
+                  <Text style={[typography.overline, {color: colors.textSecondary, marginBottom: SPACING.md}]}>
+                    {category.name.toUpperCase()}
+                  </Text>
+                  <View style={styles.emojiGrid}>
+                    {category.emojis.map((emoji) => (
+                      <Pressable
+                        key={emoji}
+                        onPress={() => {
+                          setValue('icon', emoji);
+                          setShowEmojiInput(false);
+                        }}
+                        style={[
+                          styles.emojiCell,
+                          {
+                            backgroundColor: selectedIcon === emoji ? BRAND_COLORS.primaryUltraLight : colors.surfaceAlt,
+                          },
+                        ]}
+                      >
+                        <Text style={{fontSize: 24}}>{emoji}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -202,6 +443,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
     paddingBottom: SPACING.lg,
+  },
+  headerBtn: {
+    padding: SPACING.xs,
+    minWidth: 44,
+    alignItems: 'center',
   },
   scrollContent: {
     paddingHorizontal: SPACING.lg,
@@ -229,7 +475,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: SPACING.md,
-    borderWidth: 1,
+    borderWidth: 1.5,
+  },
+  customEmojiContainer: {
+    marginTop: SPACING.md,
+    padding: SPACING.md,
+    borderRadius: RADII.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  emojiInput: {
+    width: 100,
+    fontSize: 14,
+    padding: 0,
   },
   colorRow: {
     flexDirection: 'row',
@@ -311,6 +570,80 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: SPACING.lg,
     marginTop: SPACING.xl,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.xl,
+  },
+  modalContent: {
+    width: '100%',
+    borderRadius: RADII.xl,
+    padding: SPACING.xl,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: SPACING.lg,
+    paddingBottom: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  closeBtn: {
+    padding: SPACING.sm,
+  },
+  emojiCategory: {
+    marginBottom: SPACING.xl,
+    width: '100%',
+  },
+  emojiGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.md,
+  },
+  emojiCell: {
+    width: (LAYOUT.window.width - SPACING.xl * 4 - SPACING.md * 3) / 4,
+    aspectRatio: 1,
+    borderRadius: RADII.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  daySelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: SPACING.sm,
+  },
+  dayBubble: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  customInterval: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: SPACING.md,
+    borderRadius: RADII.md,
+    marginTop: SPACING.sm,
+  },
+  intervalControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  intervalBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

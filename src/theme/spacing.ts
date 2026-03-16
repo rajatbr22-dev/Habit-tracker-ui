@@ -62,7 +62,7 @@ export const RADII = {
 // Shadows (iOS + Android)
 // ──────────────────────────────────────────────
 
-import {Platform, ViewStyle} from 'react-native';
+import {Platform, ViewStyle, Dimensions} from 'react-native';
 
 type ShadowStyle = Pick<
   ViewStyle,
@@ -106,6 +106,8 @@ export const SHADOWS = {
 // ──────────────────────────────────────────────
 
 export const LAYOUT = {
+  /** Window dimensions */
+  window: Dimensions.get('window'),
   /** Horizontal screen padding */
   screenPaddingHorizontal: SPACING.lg,
   /** Vertical safe‑area extra padding */
