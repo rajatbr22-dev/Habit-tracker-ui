@@ -1,4 +1,4 @@
-import React, {useState, useMemo} from 'react';
+import React, {useState, useMemo, useRef} from 'react';
 import {
   FlatList,
   Platform,
@@ -8,7 +8,12 @@ import {
   Text,
   TextInput,
   View,
+  Animated,
+  PanResponder,
+  Dimensions,
 } from 'react-native';
+
+const {width} = Dimensions.get('window');
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
   Search,
@@ -24,6 +29,9 @@ import {
   Dumbbell,
   Brain,
   Timer,
+  Edit2,
+  Trash2,
+  ArchiveX,
 } from 'lucide-react-native';
 import {useTheme} from '../theme';
 import {BRAND_COLORS} from '../theme/colors';
@@ -40,6 +48,7 @@ interface Habit {
   meta: string;
   streak: number;
   completed: boolean;
+  isArchived: boolean;
   Icon: any;
 }
 
@@ -51,6 +60,7 @@ const INITIAL_HABITS: Habit[] = [
     meta: '10 mins • Daily', 
     streak: 12, 
     completed: true, 
+    isArchived: false,
     Icon: Brain 
   },
   { 
@@ -60,6 +70,7 @@ const INITIAL_HABITS: Habit[] = [
     meta: '20 pages • Daily', 
     streak: 5, 
     completed: true, 
+    isArchived: false,
     Icon: BookOpen 
   },
   { 
@@ -69,6 +80,7 @@ const INITIAL_HABITS: Habit[] = [
     meta: '2.5L • Daily', 
     streak: 28, 
     completed: true, 
+    isArchived: false,
     Icon: Droplets 
   },
   { 
@@ -78,6 +90,7 @@ const INITIAL_HABITS: Habit[] = [
     meta: '1 hour • 4x/week', 
     streak: 3, 
     completed: true, 
+    isArchived: false,
     Icon: Dumbbell 
   },
   { 
@@ -87,6 +100,7 @@ const INITIAL_HABITS: Habit[] = [
     meta: '2 hours • Weekdays', 
     streak: 0, 
     completed: true, 
+    isArchived: false,
     Icon: Timer 
   },
 ];
@@ -131,59 +145,195 @@ const CategoryPill = ({
   );
 };
 
-const HabitCard = ({
-  habit, 
-  onToggle,
+const DateItem = ({
+  date,
+  isSelected,
   onPress
 }: {
-  habit: Habit; 
-  onToggle: () => void;
+  date: Date;
+  isSelected: boolean;
   onPress: () => void;
 }) => {
   const {colors, typography} = useTheme();
+  const dayName = date.toLocaleDateString('en-US', {weekday: 'short'}).toUpperCase();
+  const dayNum = date.getDate();
+
   return (
-    <View style={[styles.habitCard, {backgroundColor: colors.card, ...SHADOWS.sm}]}>
-      <Pressable onPress={onPress} style={styles.habitMain}>
-        <View style={styles.habitPrimaryInfo}>
-          <Text style={[typography.bodyMedium, {color: colors.text, fontWeight: '700'}]}>
-            {habit.name}
-          </Text>
-          <View style={styles.habitMetaRow}>
-            <habit.Icon size={14} color={colors.textTertiary} />
-            <Text style={[typography.caption1, {color: colors.textSecondary, marginLeft: 6}]}>
-              {habit.meta}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.habitStreakInfo}>
-          <View style={styles.streakLabelRow}>
-            <Flame size={14} color="#FF7675" fill="#FF7675" />
-            <Text style={[typography.bodyMedium, {color: colors.text, fontWeight: '700', marginLeft: 4}]}>
-              {habit.streak}
-            </Text>
-          </View>
-          <Text style={[typography.caption2, {color: colors.textSecondary}]}>
-            day streak
-          </Text>
-        </View>
-      </Pressable>
-
-      <Pressable
-        onPress={onToggle}
+    <Pressable
+      onPress={onPress}
+      style={[
+        styles.dateItem,
+        {
+          backgroundColor: isSelected ? BRAND_COLORS.primary : 'transparent',
+        }
+      ]}
+    >
+      <Text
         style={[
-          styles.checkBtn,
+          typography.caption2,
           {
-            backgroundColor: habit.completed ? '#E0EBFF' : colors.surfaceAlt,
+            color: isSelected ? '#FFF' : colors.textTertiary,
+            fontWeight: isSelected ? '700' : '500',
           }
         ]}
       >
-        <Check
-          size={20}
-          color={habit.completed ? BRAND_COLORS.primary : colors.textTertiary}
-          strokeWidth={3}
-        />
-      </Pressable>
+        {dayName}
+      </Text>
+      <Text
+        style={[
+          typography.bodyMedium,
+          {
+            color: isSelected ? '#FFF' : colors.text,
+            fontWeight: '700',
+            marginTop: 4,
+          }
+        ]}
+      >
+        {dayNum}
+      </Text>
+    </Pressable>
+  );
+};
+
+const SwipeableHabitItem = ({
+  habit,
+  onToggle,
+  onPress,
+  onArchive,
+  onDelete,
+  onEdit,
+  isArchived,
+}: {
+  habit: Habit;
+  onToggle: () => void;
+  onPress: () => void;
+  onArchive: () => void;
+  onDelete: () => void;
+  onEdit: () => void;
+  isArchived?: boolean;
+}) => {
+  const {colors, typography} = useTheme();
+  const translateX = useRef(new Animated.Value(0)).current;
+  
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 10;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dx < 0) {
+          translateX.setValue(gestureState.dx);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dx < -120) {
+          Animated.spring(translateX, {
+            toValue: -180,
+            useNativeDriver: true,
+            bounciness: 0,
+          }).start();
+        } else {
+          Animated.spring(translateX, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
+
+  return (
+    <View style={styles.swipeContainer}>
+      <View style={styles.actionRow}>
+        <Pressable 
+          style={[styles.actionBtn, {backgroundColor: '#6C5CE7'}]} 
+          onPress={() => {
+            Animated.timing(translateX, {toValue: 0, duration: 200, useNativeDriver: true}).start();
+            onEdit();
+          }}
+        >
+          <Edit2 size={20} color="#FFF" />
+        </Pressable>
+        <Pressable 
+          style={[styles.actionBtn, {backgroundColor: '#FF7675'}]} 
+          onPress={() => {
+            Animated.timing(translateX, {toValue: 0, duration: 200, useNativeDriver: true}).start();
+            onArchive();
+          }}
+        >
+          {
+            !isArchived ? 
+            <Archive size={20} color="#FFF" />
+            : 
+            <ArchiveX size={20} color="#FFF" />
+          }
+        </Pressable>
+        <Pressable 
+          style={[styles.actionBtn, {backgroundColor: '#e74c3c'}]} 
+          onPress={() => {
+            Animated.timing(translateX, {toValue: 0, duration: 200, useNativeDriver: true}).start();
+            onDelete();
+          }}
+        >
+          <Trash2 size={20} color="#FFF" />
+        </Pressable>
+      </View>
+      <Animated.View
+        {...panResponder.panHandlers}
+        style={[
+          styles.habitCard,
+          {
+            backgroundColor: colors.card,
+            ...SHADOWS.sm,
+            transform: [{translateX}],
+            marginHorizontal: 0, // override margin for swiping
+            width: width - SPACING.xl * 2,
+            alignSelf: 'center',
+          },
+        ]}
+      >
+        <Pressable onPress={onPress} style={styles.habitMain}>
+          <View style={styles.habitPrimaryInfo}>
+            <Text style={[typography.bodyMedium, {color: colors.text, fontWeight: '700'}]}>
+              {habit.name}
+            </Text>
+            <View style={styles.habitMetaRow}>
+              <habit.Icon size={14} color={colors.textTertiary} />
+              <Text style={[typography.caption1, {color: colors.textSecondary, marginLeft: 6}]}>
+                {habit.meta}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.habitStreakInfo}>
+            <View style={styles.streakLabelRow}>
+              <Flame size={14} color="#FF7675" fill="#FF7675" />
+              <Text style={[typography.bodyMedium, {color: colors.text, fontWeight: '700', marginLeft: 4}]}>
+                {habit.streak}
+              </Text>
+            </View>
+            <Text style={[typography.caption2, {color: colors.textSecondary}]}>
+              day streak
+            </Text>
+          </View>
+        </Pressable>
+
+        <Pressable
+          onPress={onToggle}
+          style={[
+            styles.checkBtn,
+            {
+              backgroundColor: habit.completed ? '#E0EBFF' : colors.surfaceAlt,
+            }
+          ]}
+        >
+          <Check
+            size={20}
+            color={habit.completed ? BRAND_COLORS.primary : colors.textTertiary}
+            strokeWidth={3}
+          />
+        </Pressable>
+      </Animated.View>
     </View>
   );
 };
@@ -199,19 +349,52 @@ const HabitsListScreen: React.FC<{navigation: any}> = ({navigation}) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [habits, setHabits] = useState(INITIAL_HABITS);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showArchived, setShowArchived] = useState(false);
+
+  const dates = useMemo(() => {
+    const d = [];
+    const today = new Date();
+    for (let i = -3; i <= 3; i++) {
+      const nextDate = new Date(today);
+      nextDate.setDate(today.getDate() + i);
+      d.push(nextDate);
+    }
+    return d;
+  }, []);
 
   const filteredHabits = useMemo(() => {
     return habits.filter((habit) => {
       const matchesSearch = habit.name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = activeCategory === 'All' || habit.category === activeCategory;
-      return matchesSearch && matchesCategory;
+      return matchesSearch && matchesCategory && !habit.isArchived;
     });
   }, [searchQuery, activeCategory, habits]);
+
+  const archivedHabits = useMemo(() => {
+    return habits.filter(h => h.isArchived);
+  }, [habits]);
 
   const toggleHabit = (id: string) => {
     setHabits((prev) =>
       prev.map((h) => (h.id === id ? {...h, completed: !h.completed} : h))
     );
+  };
+
+  const archiveHabit = (id: string) => {
+    setHabits((prev) =>
+      prev.map((h) => (h.id === id ? {...h, isArchived: true} : h))
+    );
+  };
+
+  const unarchiveHabit = (id: string) => {
+    setHabits((prev) =>
+      prev.map((h) => (h.id === id ? {...h, isArchived: false} : h))
+    );
+  };
+
+  const deleteHabit = (id: string) => {
+    setHabits((prev) => prev.filter((h) => h.id !== id));
   };
 
   return (
@@ -245,6 +428,24 @@ const HabitsListScreen: React.FC<{navigation: any}> = ({navigation}) => {
           {/* <Mic size={20} color={colors.textTertiary} /> */}
         </View>
 
+        {/* Date Slider */}
+        <View style={styles.dateSliderContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.dateSliderContent}
+          >
+            {dates.map((date, idx) => (
+              <DateItem
+                key={idx}
+                date={date}
+                isSelected={date.toDateString() === selectedDate.toDateString()}
+                onPress={() => setSelectedDate(date)}
+              />
+            ))}
+          </ScrollView>
+        </View>
+
         {/* Category Filters */}
         <ScrollView
           horizontal
@@ -272,27 +473,47 @@ const HabitsListScreen: React.FC<{navigation: any}> = ({navigation}) => {
         </View>
 
         {filteredHabits.map((habit) => (
-          <HabitCard
+          <SwipeableHabitItem
             key={habit.id}
             habit={habit}
             onToggle={() => toggleHabit(habit.id)}
             onPress={() => navigation.navigate('HabitDetail', {habitId: habit.id})}
+            onArchive={() => archiveHabit(habit.id)}
+            onDelete={() => deleteHabit(habit.id)}
+            onEdit={() => navigation.navigate('AddHabit', {habitId: habit.id})}
           />
         ))}
 
         {/* Archived Habits Footer */}
         <Pressable 
           style={[styles.archiveRow, {backgroundColor: colors.surfaceAlt}]}
-          onPress={() => {}}
+          onPress={() => setShowArchived(!showArchived)}
         >
           <View style={styles.archiveLeft}>
             <Archive size={18} color={colors.textSecondary} />
             <Text style={[typography.bodyMedium, {color: colors.textSecondary, marginLeft: SPACING.md}]}>
-              Archived Habits
+              Archived Habits ({archivedHabits.length})
             </Text>
           </View>
-          <ChevronRight size={18} color={colors.textTertiary} />
+          <ChevronRight 
+            size={18} 
+            color={colors.textTertiary} 
+            style={{transform: [{rotate: showArchived ? '90deg' : '0deg'}]}}
+          />
         </Pressable>
+
+        {showArchived && archivedHabits.map((habit) => (
+          <SwipeableHabitItem
+            key={habit.id}
+            habit={habit}
+            onToggle={() => toggleHabit(habit.id)}
+            onPress={() => navigation.navigate('HabitDetail', {habitId: habit.id})}
+            onArchive={() => unarchiveHabit(habit.id)} // Toggle back
+            onDelete={() => deleteHabit(habit.id)}
+            onEdit={() => navigation.navigate('AddHabit', {habitId: habit.id})}
+            isArchived={true}
+          />
+        ))}
       </ScrollView>
 
       {/* FAB */}
@@ -408,6 +629,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: SPACING.xl,
     marginTop: SPACING.xl,
+    marginBottom: SPACING.md,
     padding: SPACING.lg,
     borderRadius: RADII.lg,
   },
@@ -424,6 +646,44 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderRadius: 30,
+  },
+  dateSliderContainer: {
+    paddingVertical: SPACING.md,
+  },
+  dateSliderContent: {
+    paddingHorizontal: SPACING.xl,
+    gap: SPACING.md,
+  },
+  dateItem: {
+    width: 50,
+    height: 64,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  swipeContainer: {
+    marginVertical: 0,
+    position: 'relative',
+    marginBottom: SPACING.md,
+    // marginRight: SPACING.xs,
+  },
+  actionRow: {
+    position: 'absolute',
+    right: SPACING['2xl'],
+    top: 0,
+    bottom: 0,
+    width: 180,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  actionBtn: {
+    width: 50,
+    height: 50,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
