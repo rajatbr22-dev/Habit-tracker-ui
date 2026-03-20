@@ -36,7 +36,7 @@ api.interceptors.response.use(
       await AsyncStorage.removeItem('userToken');
 
       // Optional: navigate to login screen
-      navigation.navigate('Login');
+      // navigation.navigate('Login');
     }
 
     return Promise.reject(error);

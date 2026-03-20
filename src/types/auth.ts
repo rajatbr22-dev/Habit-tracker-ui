@@ -3,7 +3,7 @@
  */
 
 import z from "zod";
-import { loginSchema, registerSchema } from "../schema/auth.scehma";
+import { loginSchema, registerSchema, forgotPasswordSchema } from "../schema/auth.scehma";
 
 export interface User {
   id: string;
@@ -51,6 +51,16 @@ export interface AuthResponse {
 }
 
 
+export type AuthStore = {
+  user: any;
+  token: string | null;
+  setAuth: (data: { user: any; token: string }) => void;
+  logout: () => void;
+};
+
+
 export type LoginFormValues = z.infer<typeof loginSchema>;
 
 export type RegisterFormValues = z.infer<typeof registerSchema>;
+
+export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;

@@ -9,6 +9,7 @@ import {
   Switch,
   Platform,
   Modal,
+  KeyboardAvoidingView,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useForm, Controller} from 'react-hook-form';
@@ -75,7 +76,7 @@ const AddHabitScreen: React.FC<{navigation: any}> = ({navigation}) => {
       icon: '🧘',
       color: HABIT_PALETTE[0],
       frequency: 'Daily',
-      daysOfWeek: [1, 2, 3, 4, 5], // Default Mon-Fri
+      daysOfWeek: [1, 2, 3, 4, 5, 6 ,7], // Default Mon-Sun
       interval: 2,
       goal: 1,
       remindersEnabled: false,
@@ -102,334 +103,348 @@ const AddHabitScreen: React.FC<{navigation: any}> = ({navigation}) => {
   const isCustomIcon = !ICONS.includes(selectedIcon);
 
   return (
-    <View style={[styles.container, {backgroundColor: colors.background}]}>
-      {/* Header */}
-      <View style={[styles.header, {paddingTop: insets.top + SPACING.md}]}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.headerBtn}>
-          <ChevronLeft size={24} color={colors.text} />
-        </Pressable>
-        <Text style={[typography.title2, {fontWeight: '700', color: colors.text}]}>New Habit</Text>
-        <Pressable onPress={handleSubmit(onSubmit)} style={styles.headerBtn}>
-          <Text style={[typography.bodyMedium, {color: isValid ? BRAND_COLORS.primary : colors.textTertiary, fontWeight: '700'}]}>Save</Text>
-        </Pressable>
-      </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Habit Name */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[typography.overline, {color: colors.textSecondary}]}>HABIT NAME</Text>
-            <Text style={[typography.caption2, {color: errors.name ? colors.error : colors.textSecondary}]}>
-              {`${habitName.length}/24`}
-            </Text>
-          </View>
-          <Controller
-            control={control}
-            name="name"
-            render={({field: {onChange, value}}) => (
-              <TextInput
-                style={[
-                  styles.input, 
-                  {
-                    backgroundColor: colors.surfaceAlt, 
-                    color: colors.text, 
-                    ...typography.body,
-                    borderColor: errors.name ? colors.error : 'transparent',
-                    borderWidth: errors.name ? 1 : 0,
-                  }
-                ]}
-                placeholder="e.g. Morning Meditation"
-                placeholderTextColor={colors.textTertiary}
-                value={value}
-                onChangeText={(text) => onChange(text.slice(0, 24))}
-              />
-            )}
-          />
+      <View style={[styles.container, {backgroundColor: colors.background}]}>
+        {/* Header */}
+        <View style={[styles.header, {paddingTop: insets.top + SPACING.md}]}>
+          <Pressable onPress={() => navigation.goBack()} style={styles.headerBtn}>
+            <ChevronLeft size={24} color={colors.text} />
+          </Pressable>
+          <Text style={[typography.title2, {fontWeight: '700', color: colors.text}]}>New Habit</Text>
+          <Pressable onPress={handleSubmit(onSubmit)} style={styles.headerBtn}>
+            <Text style={[typography.bodyMedium, {color: isValid ? BRAND_COLORS.primary : colors.textTertiary, fontWeight: '700'}]}>Save</Text>
+          </Pressable>
         </View>
 
-        {/* Icon Selection */}
-        <View style={styles.section}>
-          <Text style={[typography.overline, {color: colors.textSecondary, marginBottom: SPACING.md}]}>ICON</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.iconRow}>
-            {ICONS.map((icon) => (
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent} 
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Habit Name */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[typography.overline, {color: colors.textSecondary}]}>HABIT NAME</Text>
+              <Text style={[typography.caption2, {color: errors.name ? colors.error : colors.textSecondary}]}>
+                {`${habitName.length}/24`}
+              </Text>
+            </View>
+            <Controller
+              control={control}
+              name="name"
+              render={({field: {onChange, value}}) => (
+                <TextInput
+                  style={[
+                    styles.input, 
+                    {
+                      backgroundColor: colors.surfaceAlt, 
+                      color: colors.text, 
+                      ...typography.body,
+                      borderColor: errors.name ? colors.error : 'transparent',
+                      borderWidth: errors.name ? 1 : 0,
+                    }
+                  ]}
+                  placeholder="e.g. Morning Meditation"
+                  placeholderTextColor={colors.textTertiary}
+                  value={value}
+                  onChangeText={(text) => onChange(text.slice(0, 24))}
+                />
+              )}
+            />
+          </View>
+
+          {/* Icon Selection */}
+          <View style={styles.section}>
+            <Text style={[typography.overline, {color: colors.textSecondary, marginBottom: SPACING.md}]}>ICON</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.iconRow}>
+              {ICONS.map((icon) => (
+                <Pressable
+                  key={icon}
+                  onPress={() => {
+                    setValue('icon', icon);
+                    setShowEmojiInput(false);
+                  }}
+                  style={[
+                    styles.iconOption,
+                    {
+                      backgroundColor: selectedIcon === icon ? BRAND_COLORS.primaryUltraLight : colors.surfaceAlt,
+                      borderColor: selectedIcon === icon ? BRAND_COLORS.primary : 'transparent',
+                    },
+                  ]}
+                >
+                  <Text style={{fontSize: 20}}>{icon}</Text>
+                </Pressable>
+              ))}
               <Pressable
-                key={icon}
-                onPress={() => {
-                  setValue('icon', icon);
-                  setShowEmojiInput(false);
-                }}
+                onPress={() => setShowEmojiInput(true)}
                 style={[
                   styles.iconOption,
                   {
-                    backgroundColor: selectedIcon === icon ? BRAND_COLORS.primaryUltraLight : colors.surfaceAlt,
-                    borderColor: selectedIcon === icon ? BRAND_COLORS.primary : 'transparent',
+                    backgroundColor: isCustomIcon ? BRAND_COLORS.primaryUltraLight : colors.surfaceAlt,
+                    borderColor: isCustomIcon ? BRAND_COLORS.primary : 'transparent',
                   },
                 ]}
               >
-                <Text style={{fontSize: 20}}>{icon}</Text>
+                <Smile size={20} color={colors.textSecondary} />
               </Pressable>
-            ))}
-            <Pressable
-              onPress={() => setShowEmojiInput(true)}
-              style={[
-                styles.iconOption,
-                {
-                  backgroundColor: isCustomIcon ? BRAND_COLORS.primaryUltraLight : colors.surfaceAlt,
-                  borderColor: isCustomIcon ? BRAND_COLORS.primary : 'transparent',
-                },
-              ]}
-            >
-              <Smile size={20} color={colors.textSecondary} />
-            </Pressable>
-          </ScrollView>
-        </View>
-
-        {/* Color Selection */}
-        <View style={styles.section}>
-          <Text style={[typography.overline, {color: colors.textSecondary, marginBottom: SPACING.md}]}>COLOR</Text>
-          <View style={styles.colorRow}>
-            {HABIT_PALETTE.map((color) => (
-              <Pressable
-                key={color}
-                onPress={() => setValue('color', color)}
-                style={[
-                  styles.colorOption,
-                  {backgroundColor: color},
-                ]}
-              >
-                {selectedColor === color ? (
-                  <Check size={16} color="#FFF" strokeWidth={3} />
-                ) : null}
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
-        {/* Frequency */}
-        <View style={styles.section}>
-          <Text style={[typography.overline, {color: colors.textSecondary, marginBottom: SPACING.md}]}>FREQUENCY</Text>
-          <View style={[styles.tabContainer, {backgroundColor: colors.surfaceAlt, marginBottom: SPACING.md}]}>
-            {(['Daily', 'Weekly', 'Custom'] as const).map((tab) => (
-              <Pressable
-                key={tab}
-                onPress={() => setValue('frequency', tab)}
-                style={[
-                  styles.tab,
-                  frequency === tab && {backgroundColor: BRAND_COLORS.primary, ...SHADOWS.sm},
-                ]}
-              >
-                <Text style={[typography.subheadMedium, {color: frequency === tab ? '#FFF' : colors.textSecondary}]}>
-                  {tab}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
-          {frequency === 'Weekly' && (
-            <View style={styles.daySelector}>
-              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => {
-                const isSelected = daysOfWeek.includes(index);
-                return (
-                  <Pressable
-                    key={`${day}-${index}`}
-                    onPress={() => {
-                      const newDays = isSelected
-                        ? daysOfWeek.filter((d) => d !== index)
-                        : [...daysOfWeek, index];
-                      setValue('daysOfWeek', newDays);
-                    }}
-                    style={[
-                      styles.dayBubble,
-                      {
-                        backgroundColor: isSelected ? BRAND_COLORS.primary : colors.surfaceAlt,
-                        borderColor: isSelected ? BRAND_COLORS.primary : 'transparent',
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        typography.caption1,
-                        {color: isSelected ? '#FFF' : colors.textSecondary, fontWeight: '700'},
-                      ]}
-                    >
-                      {day}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          )}
-
-          {frequency === 'Custom' && (
-            <View style={[styles.customInterval, {backgroundColor: colors.surfaceAlt}]}>
-              <Text style={[typography.body, {color: colors.text}]}>Every</Text>
-              <View style={styles.intervalControls}>
-                <Pressable
-                  onPress={() => setValue('interval', Math.max(1, interval - 1))}
-                  style={[styles.intervalBtn, {borderColor: colors.border}]}
-                >
-                  <Minus size={16} color={colors.text} />
-                </Pressable>
-                <Text style={[typography.title3, {color: colors.text, marginHorizontal: SPACING.md}]}>
-                  {interval}
-                </Text>
-                <Pressable
-                  onPress={() => setValue('interval', interval + 1)}
-                  style={[styles.intervalBtn, {borderColor: colors.border}]}
-                >
-                  <Plus size={16} color={colors.text} />
-                </Pressable>
-              </View>
-              <Text style={[typography.body, {color: colors.text}]}>days</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Goal */}
-        <View style={[styles.goalCard, {backgroundColor: colors.surfaceAlt}]}>
-          <View>
-            <Text style={[typography.title3, {color: colors.text}]}>
-              {frequency === 'Daily' ? 'Daily Goal' : frequency === 'Weekly' ? 'Weekly Goal' : 'Custom Goal'}
-            </Text>
-            <Text style={[typography.caption1, {color: colors.textSecondary}]}>
-              {frequency === 'Daily' ? 'Times per day' : frequency === 'Weekly' ? 'Times per week' : 'Times per period'}
-            </Text>
-          </View>
-          <View style={styles.counter}>
-            <Pressable 
-              onPress={() => setValue('goal', Math.max(1, dailyGoal - 1))}
-              style={[styles.counterBtn, {borderColor: BRAND_COLORS.primary}]}
-            >
-              <Minus size={18} color={BRAND_COLORS.primary} strokeWidth={3} />
-            </Pressable>
-            <Text style={[typography.title2, {color: colors.text, marginHorizontal: SPACING.lg}]}>{dailyGoal}</Text>
-            <Pressable 
-              onPress={() => setValue('goal', dailyGoal + 1)}
-              style={[styles.counterBtn, {backgroundColor: BRAND_COLORS.primary}]}
-            >
-              <Plus size={18} color="#FFF" strokeWidth={3} />
-            </Pressable>
-          </View>
-        </View>
-
-        {/* Reminders */}
-        <View style={styles.reminderRow}>
-           <Text style={[typography.overline, {color: colors.textSecondary}]}>REMINDERS</Text>
-           <Controller
-            control={control}
-            name="remindersEnabled"
-            render={({field: {onChange, value}}) => (
-              <Switch 
-                value={value} 
-                onValueChange={onChange} 
-                trackColor={{true: BRAND_COLORS.primary}}
-              />
-            )}
-           />
-        </View>
-
-        {remindersEnabled && (
-          <Pressable 
-            style={[styles.reminderCard, {backgroundColor: colors.surfaceAlt}]}
-            onPress={() => setShowTimePicker(true)}
-          >
-            <View style={styles.timeLabel}>
-                <View style={[styles.bellIcon, {backgroundColor: BRAND_COLORS.primaryUltraLight}]}>
-                  <Bell size={16} color={BRAND_COLORS.primary} fill={BRAND_COLORS.primary} />
-                </View>
-                <Text style={[typography.body, {color: colors.text, marginLeft: SPACING.md}]}>
-                  {reminderTime.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: true})}
-                </Text>
-            </View>
-            <Clock size={20} color={colors.textSecondary} />
-          </Pressable>
-        )}
-
-        {/* Notes */}
-        <View style={styles.section}>
-          <Text style={[typography.overline, {color: colors.textSecondary, marginBottom: SPACING.md}]}>NOTES</Text>
-          <Controller
-            control={control}
-            name="notes"
-            render={({field: {onChange, value}}) => (
-              <TextInput
-                multiline
-                numberOfLines={4}
-                style={[styles.notesInput, {backgroundColor: colors.surfaceAlt, color: colors.text, ...typography.body}]}
-                placeholder="Add a motivating thought..."
-                placeholderTextColor={colors.textTertiary}
-                value={value}
-                onChangeText={onChange}
-              />
-            )}
-          />
-        </View>
-
-        {/* Archive Habit Button */}
-        <Pressable style={styles.archiveBtn}>
-          <Archive size={18} color={colors.textSecondary} style={{marginRight: 8}} />
-          <Text style={[typography.body, {color: colors.textSecondary}]}>Archive Habit</Text>
-        </Pressable>
-      </ScrollView>
-
-      {/* Time Picker */}
-      {showTimePicker && (
-        <DateTimePicker
-          value={reminderTime}
-          mode="time"
-          is24Hour={false}
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={(event, selectedDate) => {
-            setShowTimePicker(false);
-            if (selectedDate) {
-              setValue('reminderTime', selectedDate);
-            }
-          }}
-        />
-      )}
-
-      {/* Categorized Emoji Picker Modal */}
-      <Modal visible={showEmojiInput} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, {backgroundColor: colors.card, height: '60%'}]}>
-            <View style={styles.modalHeader}>
-              <Text style={[typography.title3, {color: colors.text}]}>Choose Icon</Text>
-              <Pressable onPress={() => setShowEmojiInput(false)} style={styles.closeBtn}>
-                <Text style={[typography.bodyMedium, {color: BRAND_COLORS.primary}]}>Done</Text>
-              </Pressable>
-            </View>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {EMOJI_CATEGORIES.map((category) => (
-                <View key={category.name} style={styles.emojiCategory}>
-                  <Text style={[typography.overline, {color: colors.textSecondary, marginBottom: SPACING.md}]}>
-                    {category.name.toUpperCase()}
-                  </Text>
-                  <View style={styles.emojiGrid}>
-                    {category.emojis.map((emoji) => (
-                      <Pressable
-                        key={emoji}
-                        onPress={() => {
-                          setValue('icon', emoji);
-                          setShowEmojiInput(false);
-                        }}
-                        style={[
-                          styles.emojiCell,
-                          {
-                            backgroundColor: selectedIcon === emoji ? BRAND_COLORS.primaryUltraLight : colors.surfaceAlt,
-                          },
-                        ]}
-                      >
-                        <Text style={{fontSize: 24}}>{emoji}</Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                </View>
-              ))}
             </ScrollView>
           </View>
-        </View>
-      </Modal>
-    </View>
+
+          {/* Color Selection */}
+          <View style={styles.section}>
+            <Text style={[typography.overline, {color: colors.textSecondary, marginBottom: SPACING.md}]}>COLOR</Text>
+            <View style={styles.colorRow}>
+              {HABIT_PALETTE.map((color) => (
+                <Pressable
+                  key={color}
+                  onPress={() => setValue('color', color)}
+                  style={[
+                    styles.colorOption,
+                    {backgroundColor: color},
+                  ]}
+                >
+                  {selectedColor === color ? (
+                    <Check size={16} color="#FFF" strokeWidth={3} />
+                  ) : null}
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          {/* Frequency */}
+          <View style={styles.section}>
+            <Text style={[typography.overline, {color: colors.textSecondary, marginBottom: SPACING.md}]}>FREQUENCY</Text>
+            <View style={[styles.tabContainer, {backgroundColor: colors.surfaceAlt, marginBottom: SPACING.md}]}>
+              {(['Daily', 'Weekly', 'Custom'] as const).map((tab) => (
+                <Pressable
+                  key={tab}
+                  onPress={() => setValue('frequency', tab)}
+                  style={[
+                    styles.tab,
+                    frequency === tab && {backgroundColor: BRAND_COLORS.primary, ...SHADOWS.sm},
+                  ]}
+                >
+                  <Text style={[typography.subheadMedium, {color: frequency === tab ? '#FFF' : colors.textSecondary}]}>
+                    {tab}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            {frequency === 'Weekly' && (
+              <View style={styles.daySelector}>
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => {
+                  const isSelected = daysOfWeek.includes(index);
+                  return (
+                    <Pressable
+                      key={`${day}-${index}`}
+                      onPress={() => {
+                        const newDays = isSelected
+                          ? daysOfWeek.filter((d) => d !== index)
+                          : [...daysOfWeek, index];
+                        setValue('daysOfWeek', newDays);
+                      }}
+                      style={[
+                        styles.dayBubble,
+                        {
+                          backgroundColor: isSelected ? BRAND_COLORS.primary : colors.surfaceAlt,
+                          borderColor: isSelected ? BRAND_COLORS.primary : 'transparent',
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          typography.caption1,
+                          {color: isSelected ? '#FFF' : colors.textSecondary, fontWeight: '700'},
+                        ]}
+                      >
+                        {day}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
+
+            {frequency === 'Custom' && (
+              <View style={[styles.customInterval, {backgroundColor: colors.surfaceAlt}]}>
+                <Text style={[typography.body, {color: colors.text}]}>Every</Text>
+                <View style={styles.intervalControls}>
+                  <Pressable
+                    onPress={() => setValue('interval', Math.max(1, interval - 1))}
+                    style={[styles.intervalBtn, {borderColor: colors.border}]}
+                  >
+                    <Minus size={16} color={colors.text} />
+                  </Pressable>
+                  <Text style={[typography.title3, {color: colors.text, marginHorizontal: SPACING.md}]}>
+                    {interval}
+                  </Text>
+                  <Pressable
+                    onPress={() => setValue('interval', interval + 1)}
+                    style={[styles.intervalBtn, {borderColor: colors.border}]}
+                  >
+                    <Plus size={16} color={colors.text} />
+                  </Pressable>
+                </View>
+                <Text style={[typography.body, {color: colors.text}]}>days</Text>
+              </View>
+            )}
+          </View>
+
+          {/* Goal */}
+          <View style={[styles.goalCard, {backgroundColor: colors.surfaceAlt}]}>
+            <View>
+              <Text style={[typography.title3, {color: colors.text}]}>
+                {frequency === 'Daily' ? 'Daily Goal' : frequency === 'Weekly' ? 'Weekly Goal' : 'Custom Goal'}
+              </Text>
+              <Text style={[typography.caption1, {color: colors.textSecondary}]}>
+                {frequency === 'Daily' ? 'Times per day' : frequency === 'Weekly' ? 'Times per week' : 'Times per period'}
+              </Text>
+            </View>
+            <View style={styles.counter}>
+              <Pressable 
+                onPress={() => setValue('goal', Math.max(1, dailyGoal - 1))}
+                style={[styles.counterBtn, {borderColor: BRAND_COLORS.primary}]}
+              >
+                <Minus size={18} color={BRAND_COLORS.primary} strokeWidth={3} />
+              </Pressable>
+              <Text style={[typography.title2, {color: colors.text, marginHorizontal: SPACING.lg}]}>{dailyGoal}</Text>
+              <Pressable 
+                onPress={() => setValue('goal', dailyGoal + 1)}
+                style={[styles.counterBtn, {backgroundColor: BRAND_COLORS.primary}]}
+              >
+                <Plus size={18} color="#FFF" strokeWidth={3} />
+              </Pressable>
+            </View>
+          </View>
+
+          {/* Reminders */}
+          <View style={styles.reminderRow}>
+            <Text style={[typography.overline, {color: colors.textSecondary}]}>REMINDERS</Text>
+            <Controller
+              control={control}
+              name="remindersEnabled"
+              render={({field: {onChange, value}}) => (
+                <Switch 
+                  value={value} 
+                  onValueChange={onChange} 
+                  trackColor={{true: BRAND_COLORS.primary}}
+                />
+              )}
+            />
+          </View>
+
+          {remindersEnabled && (
+            <Pressable 
+              style={[styles.reminderCard, {backgroundColor: colors.surfaceAlt}]}
+              onPress={() => setShowTimePicker(true)}
+            >
+              <View style={styles.timeLabel}>
+                  <View style={[styles.bellIcon, {backgroundColor: BRAND_COLORS.primaryUltraLight}]}>
+                    <Bell size={16} color={BRAND_COLORS.primary} fill={BRAND_COLORS.primary} />
+                  </View>
+                  <Text style={[typography.body, {color: colors.text, marginLeft: SPACING.md}]}>
+                    {reminderTime.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: true})}
+                  </Text>
+              </View>
+              <Clock size={20} color={colors.textSecondary} />
+            </Pressable>
+          )}
+
+          {/* Notes */}
+          <View style={styles.section}>
+            <Text style={[typography.overline, {color: colors.textSecondary, marginBottom: SPACING.md}]}>NOTES</Text>
+            <Controller
+              control={control}
+              name="notes"
+              render={({field: {onChange, value}}) => (
+                <TextInput
+                  multiline
+                  numberOfLines={4}
+                  style={[styles.notesInput, {backgroundColor: colors.surfaceAlt, color: colors.text, ...typography.body}]}
+                  placeholder="Add a motivating thought..."
+                  placeholderTextColor={colors.textTertiary}
+                  value={value}
+                  onChangeText={onChange}
+                />
+              )}
+            />
+          </View>
+
+          {/* Archive Habit Button */}
+          <Pressable style={styles.archiveBtn}>
+            <Archive size={18} color={colors.textSecondary} style={{marginRight: 8}} />
+            <Text style={[typography.body, {color: colors.textSecondary}]}>Archive Habit</Text>
+          </Pressable>
+        </ScrollView>
+
+        {/* Time Picker */}
+        {showTimePicker && (
+          <DateTimePicker
+            value={reminderTime}
+            mode="time"
+            is24Hour={false}
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={(event, selectedDate) => {
+              setShowTimePicker(false);
+              if (selectedDate) {
+                setValue('reminderTime', selectedDate);
+              }
+            }}
+          />
+        )}
+
+        {/* Categorized Emoji Picker Modal */}
+        <Modal visible={showEmojiInput} animationType="slide" transparent>
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, {backgroundColor: colors.card, height: '60%'}]}>
+              <View style={styles.modalHeader}>
+                <Text style={[typography.title3, {color: colors.text}]}>Choose Icon</Text>
+                <Pressable onPress={() => setShowEmojiInput(false)} style={styles.closeBtn}>
+                  <Text style={[typography.bodyMedium, {color: BRAND_COLORS.primary}]}>Done</Text>
+                </Pressable>
+              </View>
+              <ScrollView 
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
+                {EMOJI_CATEGORIES.map((category) => (
+                  <View key={category.name} style={styles.emojiCategory}>
+                    <Text style={[typography.overline, {color: colors.textSecondary, marginBottom: SPACING.md}]}>
+                      {category.name.toUpperCase()}
+                    </Text>
+                    <View style={styles.emojiGrid}>
+                      {category.emojis.map((emoji) => (
+                        <Pressable
+                          key={emoji}
+                          onPress={() => {
+                            setValue('icon', emoji);
+                            setShowEmojiInput(false);
+                          }}
+                          style={[
+                            styles.emojiCell,
+                            {
+                              backgroundColor: selectedIcon === emoji ? BRAND_COLORS.primaryUltraLight : colors.surfaceAlt,
+                            },
+                          ]}
+                        >
+                          <Text style={{fontSize: 24}}>{emoji}</Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+      </View>
+
+    </KeyboardAvoidingView>
   );
 };
 

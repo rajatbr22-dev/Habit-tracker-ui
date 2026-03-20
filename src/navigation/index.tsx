@@ -24,7 +24,10 @@ import {
   OnboardingScreen,
   DashboardScreen,
   PaywallScreen,
+  ForgotPasswordScreen,
 } from '../screens';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '../lib/react-query';
 
 // ──────────────────────────────────────────────
 // Auth Stack
@@ -36,6 +39,7 @@ const AuthNavigator: React.FC = () => (
   <AuthStack.Navigator screenOptions={{headerShown: false}}>
     <AuthStack.Screen name="Login" component={LoginScreen} />
     <AuthStack.Screen name="Register" component={RegisterScreen} />
+    <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
   </AuthStack.Navigator>
 );
 
@@ -110,9 +114,11 @@ const RootNavigator: React.FC = () => (
 // ──────────────────────────────────────────────
 
 const AppNavigation: React.FC = () => (
-  <NavigationContainer>
-    <RootNavigator />
-  </NavigationContainer>
+  <QueryClientProvider client={queryClient}>
+    <NavigationContainer>
+      <RootNavigator />
+    </NavigationContainer>
+  </QueryClientProvider>
 );
 
 export default AppNavigation;

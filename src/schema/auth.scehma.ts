@@ -37,3 +37,25 @@ export const registerSchema = z.object({
   .refine(val => val === true, 'You must agree to the terms'),
 
 });
+
+
+export const forgotPasswordSchema = z.object({
+
+  email: z
+  .string()
+  .nonempty('Email is required')
+  .email('Invalid email address'),
+
+  newPassword: z
+  .string()
+  .nonempty('New password is required')
+  .min(6, 'Password must be at least 6 characters'),
+
+  confirmPassword: z
+  .string()
+  .nonempty('Please confirm your password'),
+
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});

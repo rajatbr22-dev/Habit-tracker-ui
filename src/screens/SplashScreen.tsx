@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import {useTheme} from '../theme';
 import {BRAND_COLORS} from '../theme/colors';
+import { getItem } from '../lib/storage';
 
 // ──────────────────────────────────────────────
 // Sparkle Icon Component (SVG-like paths drawn with Views)
@@ -94,6 +95,20 @@ const SplashScreen: React.FC<SplashScreenProps> = ({navigation}) => {
   const {colors, typography} = useTheme();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    const token = await getItem('userToken');
+
+    if (token) {
+      navigation.replace('Main');
+    } else {
+      navigation.replace('Login');
+    }
+  };
 
   useEffect(() => {
     // Entry animation

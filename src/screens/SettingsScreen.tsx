@@ -28,6 +28,7 @@ import {
 import {useTheme} from '../theme';
 import {BRAND_COLORS} from '../theme/colors';
 import {RADII, SHADOWS, SPACING} from '../theme/spacing';
+import { getItem, removeItem } from '../lib/storage';
 
 const {width} = Dimensions.get('window');
 
@@ -37,6 +38,22 @@ const SettingsScreen: React.FC<{navigation: any}> = ({navigation}) => {
 
   const [darkMode, setDarkMode] = useState(false);
   const [iCloudSync, setICloudSync] = useState(true);
+
+  const handleLogout = async () => {
+    const token = await getItem('userToken');
+
+    console.log("token before logout", token)
+
+    await removeItem('userToken');
+
+    const token2 = await getItem('userToken');
+
+    console.log("token after logout", token2)
+    
+    setTimeout(() => {
+      navigation.replace('Auth');
+    }), 500
+  };
 
   const SettingItem = ({ 
     Icon, 
@@ -196,7 +213,7 @@ const SettingsScreen: React.FC<{navigation: any}> = ({navigation}) => {
         </View>
 
         {/* Sign Out */}
-        <Pressable style={styles.signOutBtn} onPress={() => navigation.navigate('Auth')}>
+        <Pressable style={styles.signOutBtn} onPress={handleLogout}>
           <Text style={styles.signOutText}>Sign Out</Text>
         </Pressable>
 

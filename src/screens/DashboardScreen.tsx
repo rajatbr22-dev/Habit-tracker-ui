@@ -22,6 +22,7 @@ import {
 import {useTheme} from '../theme';
 import {BRAND_COLORS} from '../theme/colors';
 import {RADII, SHADOWS, SPACING, LAYOUT} from '../theme/spacing';
+import { useAuthStore } from '../store/useAuthStore';
 
 const {width} = Dimensions.get('window');
 
@@ -44,7 +45,11 @@ const WEEK_DAYS = [
 
 
 const HabitCard = ({item, onPress}: {item: typeof TODAY_HABITS[0], onPress: () => void}) => {
+
   const {colors, typography} = useTheme();
+
+  // const userName = useAuthStore.getState().user?.name;
+
   return (
     <Pressable 
       onPress={onPress}
@@ -109,13 +114,17 @@ const DashboardScreen: React.FC<{navigation: any}> = ({navigation}) => {
   const {colors, typography} = useTheme();
   const insets = useSafeAreaInsets();
 
+  const userName = useAuthStore.getState().user?.displayName;
+
+  // console.log(useAuthStore.getState().user.displayName, "useAuthStore")
+
   return (
     <View style={[styles.container, {backgroundColor: colors.background}]}>
       {/* Header */}
       <View style={[styles.header, {paddingTop: insets.top + SPACING.md}]}>
         <View style={styles.headerText}>
-          <Text style={[typography.title1, {color: colors.text, fontWeight: '800'}]}>Good morning,</Text>
-          <Text style={[typography.title1, {color: BRAND_COLORS.primary, fontWeight: '800'}]}>Alex</Text>
+          <Text style={[typography.title1, {color: colors.text, fontWeight: '800'}]}>Welcome back,</Text>
+          <Text style={[typography.title1, {color: BRAND_COLORS.primary, fontWeight: '800'}]}>{userName}</Text>
         </View>
         <Pressable style={[styles.notifBtn, {backgroundColor: colors.surfaceAlt}]}>
           <Bell size={22} color={colors.text} />

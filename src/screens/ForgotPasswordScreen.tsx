@@ -15,20 +15,17 @@ import {zodResolver} from '@hookform/resolvers/zod';
 import {
   Eye,
   EyeOff,
-  Apple,
-  Chrome,
   LogIn,
+  ArrowLeft,
 } from 'lucide-react-native';
 import {useTheme} from '../theme';
 import {BRAND_COLORS} from '../theme/colors';
 import {SHADOWS, SPACING} from '../theme/spacing';
-import { loginSchema } from '../schema/auth.scehma';
-import { LoginFormValues } from '../types';
+import { forgotPasswordSchema } from '../schema/auth.scehma';
+import { ForgotPasswordFormValues } from '../types';
 import { useMutation } from '@tanstack/react-query';
 import AuthService from '../services/auth.services';
-import { setItem } from '../lib/storage';
-import { useAuthStore } from '../store/useAuthStore';
-
+import Alert, { useAlert } from '../components/Alert';
 
 const MiniLogo: React.FC = () => (
   <View style={logoStyles.container}>
@@ -84,68 +81,47 @@ const logoStyles = StyleSheet.create({
   },
 });
 
-
-const LoginScreen: React.FC<{navigation: any}> = ({navigation}) => {
+const ForgotPasswordScreen: React.FC<{navigation: any}> = ({navigation}) => {
   const {colors, typography} = useTheme();
   const insets = useSafeAreaInsets();
   const [secureText, setSecureText] = useState(true);
-
-  const { setAuth } = useAuthStore.getState();
+  const [secureConfirmText, setSecureConfirmText] = useState(true);
+  const { alertProps, error: showError, success: showSuccess } = useAlert();
 
   const {
     control,
     handleSubmit,
     formState: {errors},
-  } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<ForgotPasswordFormValues>({
+    resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
       email: '',
-      password: '',
+      newPassword: '',
+      confirmPassword: '',
     },
   });
 
-  const loginMutation = useMutation({
-    mutationKey: ['login'],
-
-    mutationFn: (data: LoginFormValues) => AuthService.loginUser(data),
-
-    onSuccess: async(data) => {
-
-      console.log('Login success:', data?.data?.token);
-
-      if(data?.data?.token){
-        await setItem('userToken', data?.data?.token);
-
-        setAuth({ user: data?.data?.user, token: data?.data?.token });
-      }
-
-
-      if(navigation){
-        navigation.replace('Main');
-      }
-
-      
-
+  const forgotPasswordMutation = useMutation({
+    mutationKey: ['forgotPassword'],
+    mutationFn: (data: ForgotPasswordFormValues) => AuthService.forgotPassword(data),
+    onSuccess: (data) => {
+      showSuccess('Your password has been reset successfully!', { title: 'Success' });
+      setTimeout(() => {
+        navigation.goBack();
+      }, 2000);
     },
-
-    onError: (error) => {
-
-      console.log('Login error:', error);
-
+    onError: (error: any) => {
+      showError(error.message || 'Something went wrong. Please try again.', { title: 'Reset Failed' });
     }
+  });
 
-  })
-
-  const onSubmit = (data: LoginFormValues) => {
-    console.log('Login form data:', data);
-
-    loginMutation.mutate(data);
-    
+  const onSubmit = (data: ForgotPasswordFormValues) => {
+    forgotPasswordMutation.mutate(data);
   };
 
-  const goToRegister = () => {
+  const goBack = () => {
     if (navigation) {
-      navigation.navigate('Register');
+      navigation.goBack();
     }
   };
 
@@ -153,33 +129,31 @@ const LoginScreen: React.FC<{navigation: any}> = ({navigation}) => {
     <KeyboardAvoidingView
       style={[styles.flex, {backgroundColor: '#FFF'}]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      
+      <Alert {...alertProps} />
+
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
-          {paddingTop: insets.top + SPACING['2xl'], paddingBottom: insets.bottom + SPACING.lg},
+          {paddingTop: insets.top + SPACING.md, paddingBottom: insets.bottom + SPACING.lg},
         ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
         
+        {/* ── Back Button ── */}
+        <Pressable onPress={goBack} style={styles.backButton}>
+          <ArrowLeft size={24} color="#1A1A2E" />
+        </Pressable>
+
         {/* ── Header ── */}
         <View style={styles.header}>
           <MiniLogo />
           <Text style={[styles.appTitle, typography.title1, {color: '#1A1A2E', marginTop: SPACING.md, fontWeight: '800'}]}>
-            HabitTracker
+            Reset Password
           </Text>
           <Text style={[styles.subtitle, typography.subhead, {color: '#52527A', marginTop: SPACING.xs}]}>
-            Build your best self, one day at a time
+            Enter your email and a new password to recover access
           </Text>
-        </View>
-
-        {/* ── Tab Toggle ── */}
-        <View style={[styles.tabToggle, {backgroundColor: '#F8F9FE'}]}>
-          <View style={[styles.tab, styles.tabActive]}>
-            <Text style={[typography.subheadMedium, {color: BRAND_COLORS.primary, fontWeight: '700'}]}>Sign in</Text>
-          </View>
-          <Pressable style={styles.tab} onPress={goToRegister}>
-            <Text style={[typography.subheadMedium, {color: '#8E8E93'}]}>Create account</Text>
-          </Pressable>
         </View>
 
         {/* ── Form ── */}
@@ -215,14 +189,14 @@ const LoginScreen: React.FC<{navigation: any}> = ({navigation}) => {
             <Text style={styles.errorText}>{errors.email.message}</Text>
           )}
 
-          {/* Password */}
+          {/* New Password */}
           <Text style={[styles.label, typography.footnote, {color: '#8E8E93', marginTop: SPACING.lg}]}>
-            Password
+            New Password
           </Text>
           <View style={styles.passwordRow}>
             <Controller
               control={control}
-              name="password"
+              name="newPassword"
               render={({field: {onChange, onBlur, value}}) => (
                 <TextInput
                   style={[
@@ -230,7 +204,7 @@ const LoginScreen: React.FC<{navigation: any}> = ({navigation}) => {
                     styles.passwordInput,
                     {
                       backgroundColor: '#F9FAFB',
-                      borderColor: errors.password ? colors.error : '#F0F0F0',
+                      borderColor: errors.newPassword ? colors.error : '#F0F0F0',
                     },
                   ]}
                   placeholder="••••••••"
@@ -254,31 +228,67 @@ const LoginScreen: React.FC<{navigation: any}> = ({navigation}) => {
               )}
             </Pressable>
           </View>
-          {errors.password && (
-            <Text style={styles.errorText}>{errors.password.message}</Text>
+          {errors.newPassword && (
+            <Text style={styles.errorText}>{errors.newPassword.message}</Text>
           )}
 
-          {/* Forgot Password */}
-          <Pressable style={styles.forgotRow} onPress={() => navigation.navigate('ForgotPassword')}>
-            <Text style={[typography.footnote, {color: BRAND_COLORS.primary, fontWeight: '700'}]}>
-              Forgot Password?
-            </Text>
-          </Pressable>
+          {/* Confirm Password */}
+          <Text style={[styles.label, typography.footnote, {color: '#8E8E93', marginTop: SPACING.lg}]}>
+            Confirm Password
+          </Text>
+          <View style={styles.passwordRow}>
+            <Controller
+              control={control}
+              name="confirmPassword"
+              render={({field: {onChange, onBlur, value}}) => (
+                <TextInput
+                  style={[
+                    styles.input,
+                    styles.passwordInput,
+                    {
+                      backgroundColor: '#F9FAFB',
+                      borderColor: errors.confirmPassword ? colors.error : '#F0F0F0',
+                    },
+                  ]}
+                  placeholder="••••••••"
+                  placeholderTextColor="#AEAEB2"
+                  secureTextEntry={secureConfirmText}
+                  autoCapitalize="none"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                />
+              )}
+            />
+            <Pressable
+              style={styles.eyeButton}
+              onPress={() => setSecureConfirmText(!secureConfirmText)}
+              hitSlop={12}>
+              {secureConfirmText ? (
+                <EyeOff size={20} color="#AEAEB2" />
+              ) : (
+                <Eye size={20} color={BRAND_COLORS.primary} />
+              )}
+            </Pressable>
+          </View>
+          {errors.confirmPassword && (
+            <Text style={styles.errorText}>{errors.confirmPassword.message}</Text>
+          )}
         </View>
 
         {/* ── CTA ── */}
         <Pressable
-          disabled={loginMutation.isPending}
+          disabled={forgotPasswordMutation.isPending}
           style={({pressed}) => [
             styles.cta,
             SHADOWS.md,
             {
-              backgroundColor: loginMutation.isPending
+              backgroundColor: forgotPasswordMutation.isPending
                 ? '#ccc'
                 : pressed
                 ? BRAND_COLORS.primaryDark
                 : BRAND_COLORS.primary,
-              opacity: loginMutation.isPending ? 0.9 : 1,
+              opacity: forgotPasswordMutation.isPending ? 0.9 : 1,
             },
           ]}
           onPress={handleSubmit(onSubmit)}
@@ -290,45 +300,14 @@ const LoginScreen: React.FC<{navigation: any}> = ({navigation}) => {
                 {color: '#FFFFFF', fontWeight: '800'},
               ]}
             >
-              {loginMutation.isPending ? 'Signing In...' : 'Sign In'}
+              {forgotPasswordMutation.isPending ? 'Resetting Password...' : 'Reset Password'}
             </Text>
 
-            {!loginMutation.isPending && (
+            {!forgotPasswordMutation.isPending && (
               <LogIn size={18} color="#FFF" style={{marginLeft: 8}} />
             )}
           </View>
         </Pressable>
-
-        {/* ── Divider ── */}
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={[styles.dividerText, typography.caption1, {color: '#8E8E93'}]}>
-            or continue with
-          </Text>
-          <View style={styles.dividerLine} />
-        </View>
-
-        {/* ── Social Buttons ── */}
-        <View style={styles.socialRow}>
-          <Pressable style={styles.socialButton}>
-            <Chrome size={20} color="#1A1A2E" />
-            <Text style={[typography.subheadMedium, {color: '#1A1A2E', fontWeight: '700'}]}>Google</Text>
-          </Pressable>
-          <Pressable style={styles.socialButton}>
-            <Apple size={20} color="#1A1A2E" fill="#1A1A2E" />
-            <Text style={[typography.subheadMedium, {color: '#1A1A2E', fontWeight: '700'}]}>Apple</Text>
-          </Pressable>
-        </View>
-
-        {/* ── Bottom Link ── */}
-        <View style={styles.bottomLink}>
-          <Text style={[typography.subhead, {color: '#8E8E93'}]}>
-            Don't have an account?{' '}
-          </Text>
-          <Pressable onPress={goToRegister}>
-            <Text style={[typography.subheadMedium, {color: BRAND_COLORS.primary, fontWeight: '700'}]}>Sign up</Text>
-          </Pressable>
-        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -345,23 +324,6 @@ const styles = StyleSheet.create({
   },
   appTitle: {textAlign: 'center'},
   subtitle: {textAlign: 'center'},
-  tabToggle: {
-    flexDirection: 'row',
-    borderRadius: 16,
-    padding: 4,
-    marginBottom: SPACING['2xl'],
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
-  },
-  tabActive: {
-    backgroundColor: '#FFF',
-    ...SHADOWS.sm,
-  },
   form: {
     marginBottom: SPACING.xl,
   },
@@ -398,10 +360,6 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontWeight: '600',
   },
-  forgotRow: {
-    marginTop: 12,
-    alignItems: 'flex-end',
-  },
   cta: {
     borderRadius: 16,
     paddingVertical: 18,
@@ -412,42 +370,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.xl,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#F0F0F0',
-  },
-  dividerText: {
-    marginHorizontal: 16,
-  },
-  socialRow: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: SPACING['3xl'],
-  },
-  socialButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
-    borderRadius: 16,
-    paddingVertical: 14,
-    gap: 10,
-    backgroundColor: '#FFF',
-  },
-  bottomLink: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: SPACING.lg,
+  backButton: {
+    marginBottom: SPACING.lg,
+    alignSelf: 'flex-start',
+    padding: 8,
+    marginLeft: -8,
   },
 });
 
-export default LoginScreen;
+export default ForgotPasswordScreen;
