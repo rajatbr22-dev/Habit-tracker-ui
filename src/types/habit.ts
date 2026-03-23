@@ -114,7 +114,7 @@ export interface ActivityItem {
 
 export interface HabitFormValues {
   name: string;
-  icon: string | null;
+  icon: string;
   color: string;
   category: HabitCategory;
   frequency: FrequencyType;

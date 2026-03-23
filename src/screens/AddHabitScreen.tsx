@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -39,14 +39,15 @@ import {
 } from '../constants/habits';
 import type { FrequencyType, HabitCategory, DayOfWeek } from '../constants/habits';
 import type { HabitFormData, HabitFormValues } from '../types/habit';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import HabitService from '../services/habit.services';
-import { useAlert } from '../components/Alert';
+import Alert, { useAlert } from '../components/Alert';
 import { habitSchema } from '../schema/habit.schema';
 
 const AddHabitScreen: React.FC<{navigation: any, route: any}> = ({navigation, route}) => {
   const {colors, typography} = useTheme();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
 
   const habitId = route?.params?.habitId;
   const isEditMode = !!habitId;
@@ -113,6 +114,7 @@ const AddHabitScreen: React.FC<{navigation: any, route: any}> = ({navigation, ro
     }
   })
 
+
   const onSubmit = (data: HabitFormData) => {
     // Format the data to match HabitFormValues
     const habitData: HabitFormValues = {
@@ -134,8 +136,72 @@ const AddHabitScreen: React.FC<{navigation: any, route: any}> = ({navigation, ro
     };
 
     console.log('Processed Habit Data:', habitData);
-    createHabitMutation.mutate(habitData);
+    if (isEditMode) {
+      updateHabitMutation.mutate(habitData); // update
+    } else {
+      createHabitMutation.mutate(habitData); // create
+    }
   };
+
+
+  const { data: habitData } = useQuery({
+    queryKey: ["habit-detail", habitId],
+    queryFn: () => HabitService.getHabitByID(habitId),
+    enabled: !!habitId,
+
+    staleTime: 0,        // always stale
+    gcTime: 0,        // do not keep cache
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+  });
+
+
+  useEffect(() => {
+    if (habitData?.data) {
+      const h = habitData.data;
+
+      setValue("name", h.name);
+      setValue("icon", h.icon);
+      setValue("color", h.color);
+      setValue("category", h.category);
+      setValue("frequency", h.frequency);
+      setValue("targetCount", h.targetCount);
+      setValue("notes", h.notes || "");
+      setValue("meta", h.meta || "");
+      
+      // reminder
+      if (h.reminderTime) {
+        const [hour, minute] = h.reminderTime.split(":");
+        const date = new Date();
+        date.setHours(Number(hour), Number(minute));
+        setValue("reminderTime", date);
+        setValue("remindersEnabled", true);
+      }
+
+      // custom days
+      if (h.customDays) {
+        setValue("customDays", h.customDays);
+      }
+    }
+  }, [habitData]);
+
+
+  const updateHabitMutation = useMutation({
+      mutationFn: (data: HabitFormValues) =>
+        HabitService.updateHabit(habitId, data),
+
+      onSuccess: () => {
+        showSuccess("Habit updated successfully");
+        queryClient.invalidateQueries({
+          queryKey: ["all-habits"],
+        });
+        setTimeout(() => navigation.goBack(), 1000);
+    },
+
+    onError: (error) => {
+      showError(error.message, { title: "Update Failed" });
+    },
+  });
 
   const isCustomIcon = !ICONS.includes(selectedIcon);
 
@@ -145,13 +211,17 @@ const AddHabitScreen: React.FC<{navigation: any, route: any}> = ({navigation, ro
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
 
+      <Alert {...alertProps} />
+
       <View style={[styles.container, {backgroundColor: colors.background}]}>
         {/* Header */}
         <View style={[styles.header, {paddingTop: insets.top + SPACING.md}]}>
           <Pressable onPress={() => navigation.goBack()} style={styles.headerBtn}>
             <ChevronLeft size={24} color={colors.text} />
           </Pressable>
-          <Text style={[typography.title2, {fontWeight: '700', color: colors.text}]}>New Habit</Text>
+          <Text style={[typography.title2, {fontWeight: '700', color: colors.text}]}>
+            {isEditMode ? "Edit Habit" : "New Habit"}
+          </Text>
           <Pressable onPress={handleSubmit(onSubmit)} style={styles.headerBtn}>
             <Text style={[typography.bodyMedium, {color: isValid ? BRAND_COLORS.primary : colors.textTertiary, fontWeight: '700'}]}>Save</Text>
           </Pressable>
@@ -413,7 +483,7 @@ const AddHabitScreen: React.FC<{navigation: any, route: any}> = ({navigation, ro
 
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={[typography.overline, {color: colors.textSecondary}]}>METAA</Text>
+              <Text style={[typography.overline, {color: colors.textSecondary}]}>META Data</Text>
             </View>
             <Controller
               control={control}

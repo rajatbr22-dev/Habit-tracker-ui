@@ -376,6 +376,11 @@ const HabitsListScreen: React.FC<{navigation: any}> = ({navigation}) => {
       categoryFrequency: activeCategory,
       date: formattedDate as YYYYMMDD
     }),
+
+    staleTime: 0,        // always stale
+    gcTime: 0,        // do not keep cache
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   })
 
   console.log("habits data", habitsData);
@@ -438,6 +443,11 @@ const HabitsListScreen: React.FC<{navigation: any}> = ({navigation}) => {
 
   const deleteHabit = (id: string) => {
     setHabits((prev) => prev.filter((h) => h.id !== id));
+  };
+
+  const editHabit = (id: string) => {
+    navigation.navigate('AddHabit', {habitId: id});
+    // refetch()
   };
 
   return (
@@ -535,7 +545,7 @@ const HabitsListScreen: React.FC<{navigation: any}> = ({navigation}) => {
             onPress={() => navigation.navigate('HabitDetail', {habitId: habit.id})}
             onArchive={() => archiveHabit(habit.id)}
             onDelete={() => deleteHabit(habit.id)}
-            onEdit={() => navigation.navigate('AddHabit', {habitId: habit.id})}
+            onEdit={() => editHabit(habit.id)}
           />
         ))}
 
