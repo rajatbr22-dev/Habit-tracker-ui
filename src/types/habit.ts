@@ -2,7 +2,9 @@
  * HabitTracker – Habit Types
  */
 
+import z from 'zod';
 import type {FrequencyType, HabitCategory, HabitStatus, DayOfWeek, HeatmapLevel} from '../constants/habits';
+import { habitSchema, updateHabitSchema } from '../schema/habit.schema';
 
 // ──────────────────────────────────────────────
 // Core habit model
@@ -118,10 +120,12 @@ export interface HabitFormValues {
   frequency: FrequencyType;
   targetCount: number;
   customDays: DayOfWeek[];
-  goalLabel: string | null;
-  goalValue: number | null;
-  goalUnit: string | null;
-  reminderTime: string | null;
+  goalLabel: string | "";
+  goalValue: number;
+  goalUnit: string | "";
+  reminderTime: string | "";
+  notes?: string | undefined;
+  meta?: string | undefined;
 }
 
 // ──────────────────────────────────────────────
@@ -136,10 +140,10 @@ export interface UpdateHabitPayload extends Partial<HabitFormValues> {
 
 export interface CheckInPayload {
   habitId: string;
-  date: string;
+  // date: string;
   completed: boolean;
-  value?: number | null;
-  note?: string | null;
+  // value?: number | null;
+  // note?: string | null;
 }
 
 export interface HabitListResponse {
@@ -152,4 +156,17 @@ export interface HabitDetailResponse {
   streak: HabitStreak;
   heatmap: HeatmapData;
   recentActivity: ActivityItem[];
+}
+
+export type YYYYMMDD = `${number}-${number}-${number}`;
+
+export type HabitFormData = z.infer<typeof habitSchema>;
+export type UpdateHabitFormData = z.infer<typeof updateHabitSchema>;
+
+export interface GetAllHabitParams {
+  page?: number,
+  pageSize?: number,
+  search?: string,
+  categoryFrequency?: string,
+  date?: YYYYMMDD
 }

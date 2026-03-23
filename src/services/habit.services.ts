@@ -1,36 +1,13 @@
 import { AxiosError, AxiosResponse } from "axios";
 import api from "../api/axios";
-import { LoginFormValues, RegisterFormValues } from "../types";
+import { CheckInPayload, GetAllHabitParams, HabitFormValues } from "../types";
 
-const AuthService = {
+const HabitService = {
 
-    loginUser: async (formData: LoginFormValues) : Promise<AxiosResponse> => {
-
-        try {
-            const response = await api.post('/auth/login', formData);
-
-            return response.data;
-        } catch (error) {
-            const err = error as AxiosError;
-
-            console.log("api error forgot password", err)
-
-            if (err.response) {
-                throw err.response.data;
-            } else if (err.request) {
-                throw new Error("No response from server");
-            } else {
-                throw new Error(err.message);
-            }
-        }
-
-    },
-
-
-    registerUser: async (formData: RegisterFormValues) : Promise<AxiosResponse> => {
+    addNewHabit: async (formData: HabitFormValues) : Promise<AxiosResponse> => {
 
         try {
-            const response = await api.post('/auth/register', formData);
+            const response = await api.post('/habits', formData);
 
             return response.data;
         } catch (error) {
@@ -49,16 +26,36 @@ const AuthService = {
 
     },
 
-    forgotPassword: async (formData: { email: string; newPassword: string }) : Promise<AxiosResponse> => {
+    getAllHabits: async ({
+        page,
+        pageSize,
+        search,
+        categoryFrequency,
+        date
+    } : GetAllHabitParams) : Promise<AxiosResponse> => {
 
+        const params: Record<string, any> = {};
+
+
+        if(page) params.page = page;
+        if(pageSize) params.pageSize = pageSize;
+        if(search) params.search = search;
+        if(categoryFrequency) params.categoryFrequency = categoryFrequency;
+        if(date) params.date = date;
+        
+
+        console.log("params", params);
+        
         try {
-            const response = await api.post('/auth/forgot-password', formData);
+            const response = await api.get('/habits', {
+                params
+            });
 
             return response.data;
         } catch (error) {
             const err = error as AxiosError;
 
-            console.log("api error forgot password", err)
+            console.log("api error registration", err)
 
             if (err.response) {
                 throw err.response.data;
@@ -69,8 +66,32 @@ const AuthService = {
             }
         }
 
-    }
+    },
+
+
+    habitCheckIn: async (formData: CheckInPayload) : Promise<AxiosResponse> => {
+
+        try {
+            const response = await api.post('/habits/checkin', formData);
+
+            return response.data;
+        } catch (error) {
+            const err = error as AxiosError;
+
+            console.log("api error registration", err)
+
+            if (err.response) {
+                throw err.response.data;
+            } else if (err.request) {
+                throw new Error("No response from server");
+            } else {
+                throw new Error(err.message);
+            }
+        }
+
+    },
+
 } 
 
 
-export default AuthService;
+export default HabitService;

@@ -13,49 +13,41 @@ export const FREQUENCY_TYPES = {
 export type FrequencyType = (typeof FREQUENCY_TYPES)[keyof typeof FREQUENCY_TYPES];
 
 export const HABIT_CATEGORIES = {
-  ALL: 'all',
-  MORNING: 'morning',
   HEALTH: 'health',
-  WORK: 'work',
-  DAILY: 'daily',
-  EVENING: 'evening',
+  PRODUCTIVITY: 'productivity',
   FITNESS: 'fitness',
   MINDFULNESS: 'mindfulness',
-  LEARNING: 'learning',
-  CUSTOM: 'custom',
+  FINANCIAL: 'financial',
+  SOCIAL: 'social',
+  OTHER: 'other',
 } as const;
 
 export type HabitCategory = (typeof HABIT_CATEGORIES)[keyof typeof HABIT_CATEGORIES];
 
 /** Display labels for each category (used in filter chips) */
 export const CATEGORY_LABELS: Record<HabitCategory, string> = {
-  all: 'All',
-  morning: 'Morning',
   health: 'Health',
-  work: 'Work',
-  daily: 'Daily',
-  evening: 'Evening',
+  productivity: 'Productivity',
   fitness: 'Fitness',
   mindfulness: 'Mindfulness',
-  learning: 'Learning',
-  custom: 'Custom',
+  financial: 'Financial',
+  social: 'Social',
+  other: 'Other',
 };
 
 export const HABIT_STATUS = {
   ACTIVE: 'active',
   ARCHIVED: 'archived',
-  PAUSED: 'paused',
+  DELETED: 'deleted',
 } as const;
 
 export type HabitStatus = (typeof HABIT_STATUS)[keyof typeof HABIT_STATUS];
 
 /** Default category filter pills shown on Habit List screen */
 export const DEFAULT_FILTER_CATEGORIES: HabitCategory[] = [
-  'all',
-  'morning',
   'health',
-  'work',
-  'daily',
+  'productivity',
+  'financial'
 ];
 
 /** Days of week (for custom frequency picker) */
@@ -74,3 +66,16 @@ export type DayOfWeek = (typeof DAYS_OF_WEEK)[number]['key'];
 /** Heatmap intensity levels (0 = none, 4 = max) */
 export const HEATMAP_LEVELS = [0, 1, 2, 3, 4] as const;
 export type HeatmapLevel = (typeof HEATMAP_LEVELS)[number];
+
+
+
+export const ICONS = ['🧘', '💧', '🏋️', '📖', '⚙️', '🌙', '☕'];
+
+export const EMOJI_CATEGORIES = [
+  {name: 'Mindfulness', emojis: ['🧘', '🧘‍♀️', '🧘‍♂️', '🕯️', '✨', '☁️', '🌊']},
+  {name: 'Health', emojis: ['💧', '🍎', '🥦', '💊', '🥗', '🥑', '🍋']},
+  {name: 'Fitness', emojis: ['🏋️', '🏃', '🚴', '🏊', '🥊', '⚽', '🏀']},
+  {name: 'Productivity', emojis: ['📖', '✍️', '💻', '💡', '📅', '🎯', '⌛']},
+  {name: 'Growth', emojis: ['⚙️', '📈', '🌱', '🚀', '🧠', '🛠️', '🧱']},
+  {name: 'Leisure', emojis: ['🌙', '☕', '🍵', '🎨', '🎸', '🎮', '📸']},
+];

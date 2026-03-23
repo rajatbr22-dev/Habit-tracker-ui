@@ -35,7 +35,14 @@ import {
 } from 'lucide-react-native';
 import {useTheme} from '../theme';
 import {BRAND_COLORS} from '../theme/colors';
-import {RADII, SHADOWS, SPACING, LAYOUT} from '../theme/spacing';
+import {RADII, SHADOWS, SPACING} from '../theme/spacing';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import HabitService from '../services/habit.services';
+import { CheckInPayload, YYYYMMDD } from '../types';
+import { useDebounce } from '../hooks/debounce';
+import Loader from '../components/Loader';
+import ErrorView from '../components/ErrorView';
+import EmptyState from '../components/EmptyState';
 
 // ──────────────────────────────────────────────
 // Types & Mock Data
@@ -45,20 +52,20 @@ interface Habit {
   id: string;
   name: string;
   category: string;
-  meta: string;
-  streak: number;
+  meta: string | null;
+  currentStreak: number;
   completed: boolean;
   isArchived: boolean;
-  Icon: any;
+  icon: string;
 }
 
-const INITIAL_HABITS: Habit[] = [
+const INITIAL_HABITS: Habit[] = [   
   { 
     id: '1', 
     name: 'Morning Meditation', 
     category: 'Morning', 
     meta: '10 mins • Daily', 
-    streak: 12, 
+    currentStreak: 12, 
     completed: true, 
     isArchived: false,
     Icon: Brain 
@@ -105,7 +112,7 @@ const INITIAL_HABITS: Habit[] = [
   },
 ];
 
-const CATEGORIES = ['All', 'Morning', 'Health', 'Work', 'Daily'];
+const CATEGORIES = ["All", "Health", "Daily", "Productivity", "Fitness", "Weekly", "Mindfulness", "Financial", "Social", "Custom", "Other"];
 
 // ──────────────────────────────────────────────
 // Sub-components
@@ -298,9 +305,11 @@ const SwipeableHabitItem = ({
               {habit.name}
             </Text>
             <View style={styles.habitMetaRow}>
-              <habit.Icon size={14} color={colors.textTertiary} />
+              <Text style={{ fontSize: 14 }}>
+                {habit.icon}
+              </Text>
               <Text style={[typography.caption1, {color: colors.textSecondary, marginLeft: 6}]}>
-                {habit.meta}
+                {habit.meta || "xyz"}
               </Text>
             </View>
           </View>
@@ -309,7 +318,7 @@ const SwipeableHabitItem = ({
             <View style={styles.streakLabelRow}>
               <Flame size={14} color="#FF7675" fill="#FF7675" />
               <Text style={[typography.bodyMedium, {color: colors.text, fontWeight: '700', marginLeft: 4}]}>
-                {habit.streak}
+                {habit.currentStreak}
               </Text>
             </View>
             <Text style={[typography.caption2, {color: colors.textSecondary}]}>
@@ -352,6 +361,40 @@ const HabitsListScreen: React.FC<{navigation: any}> = ({navigation}) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showArchived, setShowArchived] = useState(false);
 
+  const debouncedSearch = useDebounce(searchQuery, 500)
+
+  console.log("date selected", selectedDate.toISOString().split("T")[0])
+
+  const formattedDate = selectedDate.toLocaleDateString("en-CA");
+
+  const {data: habitsData, refetch, isLoading, error, isError} = useQuery({
+    queryKey: ["all-habits", 1, 10, debouncedSearch, activeCategory, formattedDate],
+    queryFn: () => HabitService.getAllHabits({
+      page: 1,
+      pageSize: 10,
+      search: debouncedSearch.trim(),
+      categoryFrequency: activeCategory,
+      date: formattedDate as YYYYMMDD
+    }),
+  })
+
+  console.log("habits data", habitsData);
+
+  const toggleHabitMutation = useMutation({
+    mutationKey: ["check in habit"],
+    mutationFn: HabitService.habitCheckIn,
+
+    onSuccess: (data) => {
+      console.log("data after check in", data);
+      refetch()
+    },
+
+    onError: (err) => {
+      console.log(err);
+    }
+  })
+  
+
   const dates = useMemo(() => {
     const d = [];
     const today = new Date();
@@ -363,22 +406,22 @@ const HabitsListScreen: React.FC<{navigation: any}> = ({navigation}) => {
     return d;
   }, []);
 
-  const filteredHabits = useMemo(() => {
-    return habits.filter((habit) => {
-      const matchesSearch = habit.name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = activeCategory === 'All' || habit.category === activeCategory;
-      return matchesSearch && matchesCategory && !habit.isArchived;
-    });
-  }, [searchQuery, activeCategory, habits]);
-
   const archivedHabits = useMemo(() => {
     return habits.filter(h => h.isArchived);
   }, [habits]);
 
-  const toggleHabit = (id: string) => {
-    setHabits((prev) =>
-      prev.map((h) => (h.id === id ? {...h, completed: !h.completed} : h))
-    );
+  const toggleHabit = (id: string, completed: boolean) => {
+    if(completed){
+      console.log("already true", completed);
+      return;
+    };
+
+    const payload: CheckInPayload = {
+      habitId: id,
+      completed: true,
+    }
+
+    toggleHabitMutation.mutate(payload)
   };
 
   const archiveHabit = (id: string) => {
@@ -440,7 +483,7 @@ const HabitsListScreen: React.FC<{navigation: any}> = ({navigation}) => {
                 key={idx}
                 date={date}
                 isSelected={date.toDateString() === selectedDate.toDateString()}
-                onPress={() => setSelectedDate(date)}
+                onPress={() => setSelectedDate(new Date(date))}
               />
             ))}
           </ScrollView>
@@ -472,11 +515,23 @@ const HabitsListScreen: React.FC<{navigation: any}> = ({navigation}) => {
           </Text>
         </View>
 
-        {filteredHabits.map((habit) => (
+        {isLoading && <Loader visible={isLoading}/>}
+
+        {isError && <ErrorView message={error.message} />}
+
+        {!isLoading && habitsData?.data?.length === 0 && (
+          <EmptyState
+            title="No Habits Found"
+            description="Add new habit to see here."
+          />
+        )}
+
+
+        {habitsData?.data.map((habit: Habit) => (
           <SwipeableHabitItem
             key={habit.id}
             habit={habit}
-            onToggle={() => toggleHabit(habit.id)}
+            onToggle={() => toggleHabit(habit.id, habit.completed)}
             onPress={() => navigation.navigate('HabitDetail', {habitId: habit.id})}
             onArchive={() => archiveHabit(habit.id)}
             onDelete={() => deleteHabit(habit.id)}
@@ -506,7 +561,7 @@ const HabitsListScreen: React.FC<{navigation: any}> = ({navigation}) => {
           <SwipeableHabitItem
             key={habit.id}
             habit={habit}
-            onToggle={() => toggleHabit(habit.id)}
+            onToggle={() => toggleHabit(habit.id, habit.completed)}
             onPress={() => navigation.navigate('HabitDetail', {habitId: habit.id})}
             onArchive={() => unarchiveHabit(habit.id)} // Toggle back
             onDelete={() => deleteHabit(habit.id)}
