@@ -170,3 +170,5 @@ export interface GetAllHabitParams {
   categoryFrequency?: string,
   date?: YYYYMMDD
 }
+
+export const CATEGORIES = ["All", "Health", "Daily", "Productivity", "Fitness", "Weekly", "Mindfulness", "Financial", "Social", "Custom", "Other"];

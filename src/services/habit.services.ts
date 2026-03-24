@@ -138,10 +138,10 @@ const HabitService = {
     },
 
 
-    deleteHabit: async (id: string) : Promise<AxiosResponse> => {
+    archiveHabit: async (id: string) : Promise<AxiosResponse> => {
         
         try {
-            const response = await api.delete(`/habits/${id}`);
+            const response = await api.patch(`/habits/${id}/archive`);
 
             return response.data;
         } catch (error) {
@@ -161,10 +161,10 @@ const HabitService = {
     },
 
 
-    archiveHabit: async (id: string) : Promise<AxiosResponse> => {
+    getAllArchivedHabits: async () : Promise<AxiosResponse> => {
         
         try {
-            const response = await api.put(`/habits/${id}/archive`);
+            const response = await api.get('/habits/archived');
 
             return response.data;
         } catch (error) {
@@ -187,7 +187,7 @@ const HabitService = {
     unarchiveHabit: async (id: string) : Promise<AxiosResponse> => {
         
         try {
-            const response = await api.put(`/habits/${id}/unarchive`);
+            const response = await api.patch(`/habits/${id}/unarchive`);
 
             return response.data;
         } catch (error) {
@@ -207,10 +207,10 @@ const HabitService = {
     },
 
 
-    archiveAllHabits: async () : Promise<AxiosResponse> => {
+    deleteHabit: async (id: string) : Promise<AxiosResponse> => {
         
         try {
-            const response = await api.put(`/habits/archive-all`);
+            const response = await api.patch(`/habits/${id}/delete`);
 
             return response.data;
         } catch (error) {
@@ -230,10 +230,10 @@ const HabitService = {
     },
 
 
-    unarchiveAllHabits: async () : Promise<AxiosResponse> => {
+    getDetailedHabit: async (id: string) : Promise<AxiosResponse> => {
         
         try {
-            const response = await api.put(`/habits/unarchive-all`);
+            const response = await api.get(`/habits/${id}/detail`);
 
             return response.data;
         } catch (error) {
@@ -251,6 +251,7 @@ const HabitService = {
         }
 
     },
+
 
 
 }
