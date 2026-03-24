@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -6,6 +6,7 @@ import {
   View,
   Dimensions,
   Pressable,
+  RefreshControl,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LineChart, BarChart } from 'react-native-gifted-charts';
@@ -14,94 +15,107 @@ import {
   CheckCircle,
   Flame,
   TrendingUp,
-  Info
+  Info,
+  ChevronRight,
 } from 'lucide-react-native';
 import { useTheme } from '../theme';
 import { BRAND_COLORS, SEMANTIC_COLORS } from '../theme/colors';
 import { RADII, SHADOWS, SPACING, LAYOUT } from '../theme/spacing';
+import { useQuery } from '@tanstack/react-query';
+import { DashboardService } from '../services/dashboard.services';
+import { AnalyticsSkeleton } from '../components/AnalyticsSkeleton';
+import ErrorView from '../components/ErrorView';
 
 const { width } = Dimensions.get('window');
+
+const MOCK_DATA = {
+  summary: {
+    totalHabits: 8,
+    activeHabits: 5,
+    averageCompletionRate: 0.78,
+    currentOverallStreak: 12,
+    longestOverallStreak: 24,
+    totalCheckIns: 156,
+  },
+  perHabit: [
+    { habitId: '1', habitName: 'Morning Meditation', habitColor: BRAND_COLORS.primary, completionRate: 0.95, currentStreak: 15, longestStreak: 30, totalCompletions: 45 },
+    { habitId: '2', habitName: 'Drink 2L Water', habitColor: '#0984E3', completionRate: 0.82, currentStreak: 8, longestStreak: 12, totalCompletions: 38 },
+    { habitId: '3', habitName: 'Read 20 Pages', habitColor: '#00B894', completionRate: 0.65, currentStreak: 3, longestStreak: 7, totalCompletions: 22 },
+    { habitId: '4', habitName: 'Gym Workout', habitColor: '#E17055', completionRate: 0.45, currentStreak: 1, longestStreak: 5, totalCompletions: 12 },
+    { habitId: '5', habitName: 'Deep Work', habitColor: BRAND_COLORS.primaryLight, completionRate: 0.88, currentStreak: 10, longestStreak: 15, totalCompletions: 40 },
+  ],
+  weeklyOverview: {
+    weekStart: '2024-03-18',
+    dailyRates: [0.65, 0.72, 0.68, 0.85, 0.92, 0.88, 0.95],
+    overallRate: 0.81,
+  }
+};
+
+const HeatmapCell = ({ level, colors }: { level: number; colors: any }) => {
+  const cellColor = useMemo(() => {
+    if (level === 0) return colors.surfaceAlt;
+    if (level === 1) return BRAND_COLORS.primaryUltraLight;
+    if (level === 2) return BRAND_COLORS.primaryLight;
+    if (level === 3) return BRAND_COLORS.primary;
+    return BRAND_COLORS.primaryDark;
+  }, [level, colors]);
+
+  return <View style={[styles.heatCell, { backgroundColor: cellColor }]} />;
+};
 
 const AnalyticsScreen: React.FC = () => {
   const { colors, typography } = useTheme();
   const insets = useSafeAreaInsets();
   const [timeRange, setTimeRange] = useState('Week');
 
-  const DATA_BY_RANGE: any = {
-    Day: {
-      line: [
-        { value: 60, label: '08:00' },
-        { value: 75, label: '12:00' },
-        { value: 65, label: '16:00' },
-        { value: 90, label: '20:00' },
-      ],
-      bar: [
-        { value: 2, label: 'AM', frontColor: BRAND_COLORS.primary },
-        { value: 4, label: 'PM', frontColor: BRAND_COLORS.primaryLight },
-      ],
-      spacing: (width - 60) / 4,
+  const { data: analyticsData, isLoading, isError, refetch, isRefetching } = useQuery({
+    queryKey: ['analytics-summary'],
+    queryFn: async () => {
+      const response = await DashboardService.getSummaryHabits();
+      return response.data;
     },
-    Week: {
-      line: [
-        { value: 65, label: 'Mon' },
-        { value: 72, label: 'Tue' },
-        { value: 68, label: 'Wed' },
-        { value: 85, label: 'Thu' },
-        { value: 92, label: 'Fri' },
-        { value: 88, label: 'Sat' },
-        { value: 95, label: 'Sun' },
-      ],
-      bar: [
-        { value: 4, label: 'Mon', frontColor: BRAND_COLORS.primaryLight },
-        { value: 5, label: 'Tue', frontColor: BRAND_COLORS.primaryLight },
-        { value: 7, label: 'Wed', frontColor: BRAND_COLORS.primaryLight },
-        { value: 8, label: 'Thu', frontColor: BRAND_COLORS.primary },
-        { value: 6, label: 'Fri', frontColor: BRAND_COLORS.primaryLight },
-        { value: 4, label: 'Sat', frontColor: BRAND_COLORS.primaryLight },
-        { value: 3, label: 'Sun', frontColor: BRAND_COLORS.primaryLight },
-      ],
-      spacing: (width - 100) / 7,
-    },
-    Month: {
-      line: [
-        { value: 50, label: 'W1' },
-        { value: 70, label: 'W2' },
-        { value: 65, label: 'W3' },
-        { value: 85, label: 'W4' },
-      ],
-      bar: [
-        { value: 15, label: 'W1', frontColor: BRAND_COLORS.primaryLight },
-        { value: 22, label: 'W2', frontColor: BRAND_COLORS.primaryLight },
-        { value: 18, label: 'W3', frontColor: BRAND_COLORS.primaryLight },
-        { value: 26, label: 'W4', frontColor: BRAND_COLORS.primary },
-      ],
-      spacing: (width - 60) / 4,
-    },
-    Year: {
-      line: [
-        { value: 40, label: 'Q1' },
-        { value: 60, label: 'Q2' },
-        { value: 55, label: 'Q3' },
-        { value: 80, label: 'Q4' },
-      ],
-      bar: [
-        { value: 45, label: 'Q1', frontColor: BRAND_COLORS.primaryLight },
-        { value: 70, label: 'Q2', frontColor: BRAND_COLORS.primaryLight },
-        { value: 65, label: 'Q3', frontColor: BRAND_COLORS.primaryLight },
-        { value: 95, label: 'Q4', frontColor: BRAND_COLORS.primary },
-      ],
-      spacing: (width - 60) / 4,
-    },
-  };
+  });
 
-  const currentData = DATA_BY_RANGE[timeRange];
+  const USE_MOCK = true; // Set to false to use real data
+  const data = USE_MOCK ? MOCK_DATA : analyticsData;
+
+  const summary = data?.summary;
+  const weeklyOverview = data?.weeklyOverview;
+  const perHabit = data?.perHabit;
 
   const chartWidth = width - (LAYOUT.screenPaddingHorizontal * 2) - SPACING.lg * 2;
+
+  const lineChartData = useMemo(() => {
+    if (!weeklyOverview) return [];
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return weeklyOverview.dailyRates.map((rate: number, index: number) => ({
+      value: Math.round(rate * 100),
+      label: days[index],
+    }));
+  }, [weeklyOverview]);
+
+  const barChartData = useMemo(() => {
+    if (!perHabit) return [];
+    return perHabit.slice(0, 7).map((habit: any) => ({
+      value: habit.completionRate,
+      label: habit.habitName.substring(0, 3),
+      frontColor: habit.habitColor || BRAND_COLORS.primaryLight,
+    }));
+  }, [perHabit]);
+
+  if (isLoading && !USE_MOCK) return <AnalyticsSkeleton />;
+  if (isError && !USE_MOCK) return <ErrorView onRetry={refetch} />;
 
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={{ paddingTop: insets.top + SPACING.md, paddingBottom: SPACING['2xl'] }}
+      contentContainerStyle={{
+        paddingTop: insets.top + SPACING.md,
+        paddingBottom: SPACING['2xl']
+      }}
+      refreshControl={
+        <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={BRAND_COLORS.primary} />
+      }
     >
       <View style={styles.header}>
         <Text style={[typography.largeTitle, { color: colors.text }]}>Analytics</Text>
@@ -131,10 +145,10 @@ const AnalyticsScreen: React.FC = () => {
       </View>
 
       <Text style={[typography.subhead, { color: colors.textSecondary, marginLeft: LAYOUT.screenPaddingHorizontal, marginBottom: SPACING.lg }]}>
-        March 2024 Overview
+        {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} Overview
       </Text>
 
-      {/* Stats Grid - Horizontal Scroll */}
+      {/* Stats Grid */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -145,35 +159,43 @@ const AnalyticsScreen: React.FC = () => {
             <CheckCircle size={16} color={BRAND_COLORS.primary} />
           </View>
           <Text style={[typography.caption1, { color: colors.textSecondary, marginTop: SPACING.sm }]}>Completion</Text>
-          <Text style={[typography.title1, { color: colors.text }]}>84%</Text>
+          <Text style={[typography.title1, { color: colors.text }]}>
+            {summary?.averageCompletionRate ? `${Math.round(summary.averageCompletionRate * 100)}%` : '0%'}
+          </Text>
         </View>
+
         <View style={[styles.statCard, { backgroundColor: colors.card, ...SHADOWS.sm }]}>
           <View style={[styles.statIconContainer, { backgroundColor: '#FFF4E5' }]}>
             <Flame size={16} color={SEMANTIC_COLORS.warning} />
           </View>
-          <Text style={[typography.caption1, { color: colors.textSecondary, marginTop: SPACING.sm }]}>Best Streak</Text>
-          <Text style={[typography.title1, { color: colors.text }]}>12d</Text>
+          <Text style={[typography.caption1, { color: colors.textSecondary, marginTop: SPACING.sm }]}>Current Streak</Text>
+          <Text style={[typography.title1, { color: colors.text }]}>{summary?.currentOverallStreak || 0}d</Text>
         </View>
+
         <View style={[styles.statCard, { backgroundColor: colors.card, ...SHADOWS.sm }]}>
           <View style={[styles.statIconContainer, { backgroundColor: '#EEF2FF' }]}>
             <TrendingUp size={16} color={SEMANTIC_COLORS.info} />
           </View>
-          <Text style={[typography.caption1, { color: colors.textSecondary, marginTop: SPACING.sm }]}>Top Percent</Text>
-          <Text style={[typography.title1, { color: colors.text }]}>Top 5%</Text>
+          <Text style={[typography.caption1, { color: colors.textSecondary, marginTop: SPACING.sm }]}>Best Streak</Text>
+          <Text style={[typography.title1, { color: colors.text }]}>{summary?.longestOverallStreak || 0}d</Text>
         </View>
+
         <View style={[styles.statCard, { backgroundColor: colors.card, ...SHADOWS.sm }]}>
           <View style={[styles.statIconContainer, { backgroundColor: '#F0FDF4' }]}>
             <Calendar size={16} color={colors.success} />
           </View>
-          <Text style={[typography.caption1, { color: colors.textSecondary, marginTop: SPACING.sm }]}>Total Days</Text>
-          <Text style={[typography.title1, { color: colors.text }]}>32</Text>
+          <Text style={[typography.caption1, { color: colors.textSecondary, marginTop: SPACING.sm }]}>Total Check-ins</Text>
+          <Text style={[typography.title1, { color: colors.text }]}>{summary?.totalCheckIns || 0}</Text>
         </View>
       </ScrollView>
 
       {/* Completion Trend Chart */}
       <View style={[styles.chartContainer, { backgroundColor: colors.card, ...SHADOWS.sm }]}>
         <View style={styles.chartHeader}>
-          <Text style={[typography.title2, { color: colors.text }]}>Completion Trend</Text>
+          <View>
+            <Text style={[typography.title2, { color: colors.text }]}>Completion Trend</Text>
+            <Text style={[typography.caption1, { color: colors.textSecondary }]}>Overall progress this week</Text>
+          </View>
           <Info size={16} color={colors.textSecondary} />
         </View>
 
@@ -181,13 +203,13 @@ const AnalyticsScreen: React.FC = () => {
           <LineChart
             areaChart
             curved
-            data={currentData.line}
+            data={lineChartData}
             width={chartWidth}
             height={160}
             spacing={chartWidth / 6.5}
             initialSpacing={12.5}
             color={BRAND_COLORS.primary}
-            thickness={2}
+            thickness={3}
             startFillColor={BRAND_COLORS.primary}
             endFillColor={BRAND_COLORS.primaryUltraLight}
             startOpacity={0.4}
@@ -199,7 +221,6 @@ const AnalyticsScreen: React.FC = () => {
             hideYAxisText
             dataPointsColor={BRAND_COLORS.primary}
             dataPointsRadius={5}
-
             focusedDataPointRadius={7}
             pointerConfig={{
               pointerStripHeight: 140,
@@ -210,7 +231,6 @@ const AnalyticsScreen: React.FC = () => {
               pointerLabelComponent: (items: any) => {
                 return (
                   <View style={[styles.pointerLabel, { backgroundColor: colors.card, ...SHADOWS.md }]}>
-                    {/* <Text style={[typography.caption2, {color: colors.text}]}>{items[0].label}</Text> */}
                     <Text style={[typography.subheadMedium, { color: BRAND_COLORS.primary }]}>{items[0].value}%</Text>
                   </View>
                 );
@@ -221,28 +241,87 @@ const AnalyticsScreen: React.FC = () => {
 
         <View style={[styles.chartFooter, { borderTopColor: colors.border }]}>
           <View style={styles.footerItem}>
-            <Text style={[typography.caption2, { color: colors.textSecondary }]}>This Week</Text>
-            <Text style={[typography.subheadMedium, { color: colors.success }]}>+12%</Text>
+            <Text style={[typography.caption2, { color: colors.textSecondary }]}>Avg Rate</Text>
+            <Text style={[typography.subheadMedium, { color: colors.text }]}>
+              {weeklyOverview?.overallRate ? `${Math.round(weeklyOverview.overallRate * 100)}%` : '0%'}
+            </Text>
           </View>
           <View style={styles.footerItem}>
-            <Text style={[typography.caption2, { color: colors.textSecondary }]}>Avg Daily</Text>
-            <Text style={[typography.subheadMedium, { color: colors.text }]}>5.2 habits</Text>
+            <Text style={[typography.caption2, { color: colors.textSecondary }]}>Active Habits</Text>
+            <Text style={[typography.subheadMedium, { color: colors.text }]}>{summary?.activeHabits || 0}</Text>
           </View>
         </View>
       </View>
 
-      {/* Activity by Day Bar Chart */}
-      <View style={[styles.chartContainer, { backgroundColor: colors.card, ...SHADOWS.sm, marginTop: SPACING.lg }]}>
-        <Text style={[typography.title2, { color: colors.text, marginBottom: SPACING.md }]}>Activity by Day</Text>
+      {/* Global Activity Heatmap */}
+      <View style={[styles.chartContainer, { backgroundColor: colors.card, ...SHADOWS.sm, marginTop: SPACING.xl }]}>
+        <View style={styles.chartHeader}>
+          <View>
+            <Text style={[typography.title2, { color: colors.text }]}>Activity Heatmap</Text>
+            <Text style={[typography.caption1, { color: colors.textSecondary }]}>Your consistency over time</Text>
+          </View>
+        </View>
+
+        <View style={styles.heatmapWrapper}>
+          <View style={styles.heatmapGrid}>
+            {Array.from({ length: 70 }).map((_, i) => (
+              <HeatmapCell key={i} level={Math.floor(Math.random() * 5)} colors={colors} />
+            ))}
+          </View>
+          <View style={styles.heatmapLegend}>
+            <Text style={[typography.caption2, { color: colors.textSecondary }]}>Less</Text>
+            <View style={styles.legendCells}>
+              {[0, 1, 2, 3, 4].map(l => <HeatmapCell key={l} level={l} colors={colors} />)}
+            </View>
+            <Text style={[typography.caption2, { color: colors.textSecondary }]}>More</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Habit Performance List */}
+      <View style={{ marginTop: SPACING.xl, paddingHorizontal: LAYOUT.screenPaddingHorizontal }}>
+        <View style={styles.sectionHeader}>
+            <Text style={[typography.title2, { color: colors.text }]}>Habit Performance</Text>
+            <Pressable style={styles.seeAllBtn}>
+                <Text style={[typography.caption1, { color: BRAND_COLORS.primary }]}>See All</Text>
+                <ChevronRight size={14} color={BRAND_COLORS.primary} />
+            </Pressable>
+        </View>
+
+        {perHabit?.map((item: any, idx: number) => (
+          <View key={item.habitId || idx} style={[styles.performanceRow, { backgroundColor: colors.card, ...SHADOWS.sm }]}>
+            <View style={[styles.perfIndicator, { backgroundColor: item.habitColor || BRAND_COLORS.primary }]} />
+            <View style={{ flex: 1, marginLeft: SPACING.md }}>
+              <Text style={[typography.bodyMedium, { color: colors.text }]} numberOfLines={1}>{item.habitName}</Text>
+              <View style={styles.perfMeta}>
+                <Flame size={12} color={SEMANTIC_COLORS.warning} />
+                <Text style={[styles.perfMetaText, { color: colors.textSecondary }]}>{item.currentStreak}d streak</Text>
+              </View>
+            </View>
+            <View style={styles.progressContainer}>
+                <Text style={[typography.caption2, { color: colors.textSecondary, marginBottom: 4, textAlign: 'right' }]}>
+                    {`${Math.round(item.completionRate * 100)}%`}
+                </Text>
+                <View style={[styles.progressBarBg, { backgroundColor: colors.surfaceAlt }]}>
+                    <View style={[styles.progressBarFill, { width: `${item.completionRate * 100}%`, backgroundColor: item.habitColor || BRAND_COLORS.primary }]} />
+                </View>
+            </View>
+          </View>
+        ))}
+      </View>
+
+      {/* Weekly Activity Bar Chart */}
+      <View style={[styles.chartContainer, { backgroundColor: colors.card, ...SHADOWS.sm, marginTop: SPACING.xl }]}>
+        <Text style={[typography.title2, { color: colors.text, marginBottom: SPACING.md }]}>Activity by Habit</Text>
         <View style={styles.chartWrapper}>
           <BarChart
-            data={currentData.bar}
+            data={barChartData}
             width={chartWidth}
             height={150}
             barWidth={24}
             noOfSections={3}
             barBorderRadius={6}
-            spacing={(chartWidth - (24 * 7)) / 7}
+            spacing={SPACING.lg}
             initialSpacing={10}
             yAxisThickness={0}
             xAxisThickness={0}
@@ -252,7 +331,7 @@ const AnalyticsScreen: React.FC = () => {
             renderTooltip={(item: any) => {
               return (
                 <View style={[styles.tooltipContainer, { backgroundColor: colors.card, ...SHADOWS.md }]}>
-                  <Text style={[typography.caption1, { color: colors.text }]}>{item.value} habits</Text>
+                  <Text style={[typography.caption1, { color: colors.text }]}>{Math.round(item.value * 100)}%</Text>
                 </View>
               );
             }}
@@ -260,27 +339,6 @@ const AnalyticsScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Habit Performance List mockup part */}
-      <View style={{ marginTop: SPACING.xl, paddingHorizontal: LAYOUT.screenPaddingHorizontal }}>
-        <Text style={[typography.title2, { color: colors.text, marginBottom: SPACING.md }]}>Habit Performance</Text>
-        {[
-          { name: 'Morning Meditation', progress: 0.95, color: SEMANTIC_COLORS.info },
-          { name: 'Read 20 Pages', progress: 0.78, color: '#A29BFE' },
-          { name: 'High Intensity Gym', progress: 0.62, color: SEMANTIC_COLORS.error },
-          { name: 'Deep Work Session', progress: 0.88, color: SEMANTIC_COLORS.success },
-        ].map((item, idx) => (
-          <View key={idx} style={[styles.performanceRow, { backgroundColor: colors.card, ...SHADOWS.sm }]}>
-            <View style={[styles.perfIndicator, { backgroundColor: item.color }]} />
-            <View style={{ flex: 1, marginLeft: SPACING.md }}>
-              <Text style={[typography.bodyMedium, { color: colors.text }]}>{item.name}</Text>
-              <Text style={[typography.caption2, { color: colors.textSecondary }]}>{`${Math.round(item.progress * 100)}% completion`}</Text>
-            </View>
-            <View style={[styles.progressBarBg, { backgroundColor: colors.surfaceAlt }]}>
-              <View style={[styles.progressBarFill, { width: `${item.progress * 100}%`, backgroundColor: item.color }]} />
-            </View>
-          </View>
-        ))}
-      </View>
     </ScrollView>
   );
 };
@@ -295,14 +353,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: LAYOUT.screenPaddingHorizontal,
     marginBottom: SPACING.xs,
-  },
-  dateSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADII.sm,
-    borderWidth: 1,
   },
   timeSelector: {
     flexDirection: 'row',
@@ -362,6 +412,31 @@ const styles = StyleSheet.create({
     borderRadius: RADII.xs,
     marginBottom: 4,
   },
+  heatmapWrapper: {
+    marginTop: SPACING.md,
+  },
+  heatmapGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    justifyContent: 'center',
+  },
+  heatCell: {
+    width: 14,
+    height: 14,
+    borderRadius: 3,
+  },
+  heatmapLegend: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginTop: SPACING.md,
+    gap: 8,
+  },
+  legendCells: {
+    flexDirection: 'row',
+    gap: 4,
+  },
   chartFooter: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -371,6 +446,17 @@ const styles = StyleSheet.create({
   },
   footerItem: {
     alignItems: 'center',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  seeAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   performanceRow: {
     flexDirection: 'row',
@@ -384,8 +470,21 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 2,
   },
-  progressBarBg: {
+  perfMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  perfMetaText: {
+    fontSize: 10,
+    fontWeight: '500',
+  },
+  progressContainer: {
     width: 80,
+  },
+  progressBarBg: {
+    width: '100%',
     height: 6,
     borderRadius: 3,
     overflow: 'hidden',
