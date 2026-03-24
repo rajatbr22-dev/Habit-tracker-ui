@@ -17,6 +17,7 @@ export type RootStackParamList = {
   Main: undefined;
   HabitDetail: {habitId: string};
   AddHabit: undefined;
+  Notifications: undefined;
   Paywall: undefined;
 };
 

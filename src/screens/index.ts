@@ -14,3 +14,4 @@ export {default as OnboardingScreen} from './OnboardingScreen';
 export {default as DashboardScreen} from './DashboardScreen';
 export {default as PaywallScreen} from './PaywallScreen';
 export {default as ForgotPasswordScreen} from './ForgotPasswordScreen';
+export {default as NotificationScreen} from './NotificationScreen';

@@ -25,6 +25,7 @@ import {RADII, SHADOWS, SPACING, LAYOUT} from '../theme/spacing';
 import { useAuthStore } from '../store/useAuthStore';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardService } from '../services/dashboard.services';
+import { useUIStore } from '../store/useUIStore';
 
 const {width} = Dimensions.get('window');
 
@@ -98,6 +99,7 @@ const StatCard = ({title, value, icon: Icon, color}: any) => {
 const DashboardScreen: React.FC<{navigation: any}> = ({navigation}) => {
   const {colors, typography} = useTheme();
   const insets = useSafeAreaInsets();
+  const { notifications, addNotification, showAlert, hideAlert } = useUIStore();
 
   const userName = useAuthStore.getState().user?.displayName;
 
@@ -149,12 +151,20 @@ const DashboardScreen: React.FC<{navigation: any}> = ({navigation}) => {
   })
 
 
-  console.log("summary habitsdata", summaryHabits);
-  
+  const unreadCount = notifications.filter(n => !n.read).length;
 
-
-
-
+  React.useEffect(() => {
+    // Mock a notification if none exists for demo
+    if (notifications.length === 0) {
+      const mockNotif = {
+        title: 'Welcome to HabitTracker!',
+        message: 'Start by adding your first habit to track your progress.',
+        type: 'info' as const,
+      };
+      addNotification(mockNotif);
+      showAlert(mockNotif);
+    }
+  }, []);
   return (
     <View style={[styles.container, {backgroundColor: colors.background}]}>
       {/* Header */}
@@ -163,9 +173,12 @@ const DashboardScreen: React.FC<{navigation: any}> = ({navigation}) => {
           <Text style={[typography.title1, {color: colors.text, fontWeight: '800'}]}>Welcome back,</Text>
           <Text style={[typography.title1, {color: BRAND_COLORS.primary, fontWeight: '800'}]}>{userName}</Text>
         </View>
-        <Pressable style={[styles.notifBtn, {backgroundColor: colors.surfaceAlt}]}>
+        <Pressable 
+          onPress={() => navigation.navigate('Notifications')}
+          style={[styles.notifBtn, {backgroundColor: colors.surfaceAlt}]}
+        >
           <Bell size={22} color={colors.text} />
-          <View style={[styles.notifDot, {backgroundColor: BRAND_COLORS.primary}]} />
+          {unreadCount > 0 && <View style={[styles.notifDot, {backgroundColor: BRAND_COLORS.primary}]} />}
         </Pressable>
       </View>
 

@@ -25,6 +25,7 @@ import {
   DashboardScreen,
   PaywallScreen,
   ForgotPasswordScreen,
+  NotificationScreen,
 } from '../screens';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '../lib/react-query';
@@ -121,6 +122,7 @@ const RootNavigator: React.FC = () => (
     <RootStack.Screen name="Main" component={MainTabNavigator} />
     <RootStack.Screen name="HabitDetail" component={HabitDetailScreen} />
     <RootStack.Screen name="AddHabit" component={AddHabitScreen} />
+    <RootStack.Screen name="Notifications" component={NotificationScreen} />
     <RootStack.Screen name="Paywall" component={PaywallScreen} />
   </RootStack.Navigator>
 );
