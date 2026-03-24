@@ -23,28 +23,13 @@ import {useTheme} from '../theme';
 import {BRAND_COLORS} from '../theme/colors';
 import {RADII, SHADOWS, SPACING, LAYOUT} from '../theme/spacing';
 import { useAuthStore } from '../store/useAuthStore';
+import { useQuery } from '@tanstack/react-query';
+import { DashboardService } from '../services/dashboard.services';
 
 const {width} = Dimensions.get('window');
 
-const TODAY_HABITS = [
-  {id: '1', name: 'Meditation', streak: 12, progress: 0.7, color: '#6C5CE7'},
-  {id: '2', name: 'Drink Water', streak: 5, progress: 0.4, color: '#0984E3'},
-  {id: '3', name: 'Grateful', streak: 24, progress: 1.0, color: '#00CEC9'},
-  {id: '4', name: 'Gym', streak: 3, progress: 0.2, color: '#E17055'},
-];
 
-const WEEK_DAYS = [
-  {day: 'M', status: 'done'},
-  {day: 'T', status: 'done'},
-  {day: 'W', status: 'missed'},
-  {day: 'T', status: 'done'},
-  {day: 'F', status: 'active'},
-  {day: 'S', status: 'pending'},
-  {day: 'S', status: 'pending'},
-];
-
-
-const HabitCard = ({item, onPress}: {item: typeof TODAY_HABITS[0], onPress: () => void}) => {
+const HabitCard = ({item, onPress}: {item: any, onPress: () => void}) => {
 
   const {colors, typography} = useTheme();
 
@@ -118,6 +103,58 @@ const DashboardScreen: React.FC<{navigation: any}> = ({navigation}) => {
 
   // console.log(useAuthStore.getState().user.displayName, "useAuthStore")
 
+  const {
+    data: todayHabits, 
+    isLoading: isLoadingTodayHabits, 
+    error: errorTodayHabits
+  } = useQuery({
+    queryKey: ['daily habits'],
+    queryFn: () => DashboardService.getTodayHabits(),
+
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    
+  })
+
+
+  const {
+    data: weeklyHabits, 
+    isLoading: isLoadingWeeklyHabits, 
+    error: errorWeeklyHabits
+  } = useQuery({
+    queryKey: ['weekly habits'],
+    queryFn: () => DashboardService.getWeeklyHabits(),
+
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+  })
+
+
+  const {
+    data: summaryHabits, 
+    isLoading: isLoadingSummaryHabits, 
+    error: errorSummaryHabits
+  } = useQuery({
+    queryKey: ['summary habits'],
+    queryFn: () => DashboardService.getSummaryHabits(),
+
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+  })
+
+
+  console.log("summary habitsdata", summaryHabits);
+  
+
+
+
+
   return (
     <View style={[styles.container, {backgroundColor: colors.background}]}>
       {/* Header */}
@@ -137,7 +174,9 @@ const DashboardScreen: React.FC<{navigation: any}> = ({navigation}) => {
         <View style={styles.sectionHeader}>
           <Text style={[typography.title3, {color: colors.text, fontWeight: '700'}]}>Today's Habits</Text>
 
-          <Pressable> 
+          <Pressable
+            onPress={() => navigation.navigate('Habits')}
+          > 
             {/* need to add here navigation to the all habit screen */}
             <Text style={[typography.subheadMedium, {color: BRAND_COLORS.primary}]}>See all</Text>
           </Pressable>
@@ -145,7 +184,7 @@ const DashboardScreen: React.FC<{navigation: any}> = ({navigation}) => {
         </View>
 
         <FlatList
-          data={TODAY_HABITS}
+          data={todayHabits?.data}
           renderItem={({item}) => (
             <HabitCard 
               item={item} 
@@ -163,8 +202,8 @@ const DashboardScreen: React.FC<{navigation: any}> = ({navigation}) => {
           <Text style={[typography.title3, {color: colors.text, fontWeight: '700', flex: 1}]}>This Week</Text>
         </View>
         <View style={[styles.weekRow, {backgroundColor: colors.card, ...SHADOWS.sm}]}>
-          {WEEK_DAYS.map((item, idx) => (
-            <View key={idx} style={styles.weekDay}>
+          {weeklyHabits?.data.map((item: any) => (
+            <View key={item.date} style={styles.weekDay}>
               <Text style={[typography.caption2, {color: colors.textSecondary, marginBottom: 8}]}>
                 {item.day}
               </Text>
@@ -188,10 +227,10 @@ const DashboardScreen: React.FC<{navigation: any}> = ({navigation}) => {
           <Text style={[typography.title3, {color: colors.text, fontWeight: '700'}]}>Streaks</Text>
         </View>
         <View style={styles.statsGrid}>
-          <StatCard title="Longest Streak" value="32 Days" icon={Flame} color="#FF7675" />
-          <StatCard title="Global Rank" value="Top 5%" icon={TrendingUp} color="#6C5CE7" />
-          <StatCard title="Total Done" value="142" icon={Check} color="#00B894" />
-          <StatCard title="Completion" value="92%" icon={Target} color="#0984E3" />
+          <StatCard title="Longest Streak" value={summaryHabits?.data.longestStreak} icon={Flame} color="#FF7675" />
+          <StatCard title="Global Rank" value={summaryHabits?.data.globalRank} icon={TrendingUp} color="#6C5CE7" />
+          <StatCard title="Total Done" value={summaryHabits?.data.totalDone} icon={Check} color="#00B894" />
+          <StatCard title="Completion" value={summaryHabits?.data.completionRate} icon={Target} color="#0984E3" />
         </View>
 
         {/* AI Tip Card - This is only for premium users */}
