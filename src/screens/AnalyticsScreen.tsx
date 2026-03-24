@@ -114,7 +114,7 @@ const AnalyticsScreen: React.FC = () => {
         paddingBottom: SPACING['2xl']
       }}
       refreshControl={
-        <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={BRAND_COLORS.primary} />
+        <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
       }
     >
       <View style={styles.header}>
@@ -135,7 +135,7 @@ const AnalyticsScreen: React.FC = () => {
             <Text
               style={[
                 typography.subheadMedium,
-                { color: timeRange === range ? BRAND_COLORS.primary : colors.textSecondary },
+                { color: timeRange === range ? colors.primary : colors.textSecondary },
               ]}
             >
               {range}
@@ -155,8 +155,8 @@ const AnalyticsScreen: React.FC = () => {
         contentContainerStyle={styles.statsScroll}
       >
         <View style={[styles.statCard, { backgroundColor: colors.card, ...SHADOWS.sm }]}>
-          <View style={[styles.statIconContainer, { backgroundColor: BRAND_COLORS.primaryUltraLight }]}>
-            <CheckCircle size={16} color={BRAND_COLORS.primary} />
+          <View style={[styles.statIconContainer, { backgroundColor: colors.primaryUltraLight }]}>
+            <CheckCircle size={16} color={colors.primary} />
           </View>
           <Text style={[typography.caption1, { color: colors.textSecondary, marginTop: SPACING.sm }]}>Completion</Text>
           <Text style={[typography.title1, { color: colors.text }]}>
@@ -165,23 +165,23 @@ const AnalyticsScreen: React.FC = () => {
         </View>
 
         <View style={[styles.statCard, { backgroundColor: colors.card, ...SHADOWS.sm }]}>
-          <View style={[styles.statIconContainer, { backgroundColor: '#FFF4E5' }]}>
-            <Flame size={16} color={SEMANTIC_COLORS.warning} />
+          <View style={[styles.statIconContainer, { backgroundColor: colors.warningLight }]}>
+            <Flame size={16} color={colors.warning} />
           </View>
           <Text style={[typography.caption1, { color: colors.textSecondary, marginTop: SPACING.sm }]}>Current Streak</Text>
           <Text style={[typography.title1, { color: colors.text }]}>{summary?.currentOverallStreak || 0}d</Text>
         </View>
 
         <View style={[styles.statCard, { backgroundColor: colors.card, ...SHADOWS.sm }]}>
-          <View style={[styles.statIconContainer, { backgroundColor: '#EEF2FF' }]}>
-            <TrendingUp size={16} color={SEMANTIC_COLORS.info} />
+          <View style={[styles.statIconContainer, { backgroundColor: colors.infoLight }]}>
+            <TrendingUp size={16} color={colors.info} />
           </View>
           <Text style={[typography.caption1, { color: colors.textSecondary, marginTop: SPACING.sm }]}>Best Streak</Text>
           <Text style={[typography.title1, { color: colors.text }]}>{summary?.longestOverallStreak || 0}d</Text>
         </View>
 
         <View style={[styles.statCard, { backgroundColor: colors.card, ...SHADOWS.sm }]}>
-          <View style={[styles.statIconContainer, { backgroundColor: '#F0FDF4' }]}>
+          <View style={[styles.statIconContainer, { backgroundColor: colors.successLight }]}>
             <Calendar size={16} color={colors.success} />
           </View>
           <Text style={[typography.caption1, { color: colors.textSecondary, marginTop: SPACING.sm }]}>Total Check-ins</Text>
@@ -208,10 +208,10 @@ const AnalyticsScreen: React.FC = () => {
             height={160}
             spacing={chartWidth / 6.5}
             initialSpacing={12.5}
-            color={BRAND_COLORS.primary}
+            color={colors.primary}
             thickness={3}
-            startFillColor={BRAND_COLORS.primary}
-            endFillColor={BRAND_COLORS.primaryUltraLight}
+            startFillColor={colors.primary}
+            endFillColor={colors.primaryUltraLight}
             startOpacity={0.4}
             endOpacity={0.1}
             noOfSections={3}

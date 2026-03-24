@@ -315,7 +315,7 @@ const AddHabitScreen: React.FC<{navigation: any, route: any}> = ({navigation, ro
                   ]}
                 >
                   {selectedColor === color ? (
-                    <Check size={16} color="#FFF" strokeWidth={3} />
+                    <Check size={16} color={colors.white} strokeWidth={3} />
                   ) : null}
                 </Pressable>
               ))}
@@ -370,7 +370,7 @@ const AddHabitScreen: React.FC<{navigation: any, route: any}> = ({navigation, ro
                     frequency === tab.key && {backgroundColor: BRAND_COLORS.primary, ...SHADOWS.sm},
                   ]}
                 >
-                  <Text style={[typography.subheadMedium, {color: frequency === tab.key ? '#FFF' : colors.textSecondary}]}>
+                  <Text style={[typography.subheadMedium, {color: frequency === tab.key ? colors.white : colors.textSecondary}]}>
                     {tab.label}
                   </Text>
                 </Pressable>
@@ -401,7 +401,7 @@ const AddHabitScreen: React.FC<{navigation: any, route: any}> = ({navigation, ro
                       <Text
                         style={[
                           typography.caption1,
-                          {color: isSelected ? '#FFF' : colors.textSecondary, fontWeight: '700'},
+                          {color: isSelected ? colors.white : colors.textSecondary, fontWeight: '700'},
                         ]}
                       >
                         {day.short}
@@ -436,7 +436,7 @@ const AddHabitScreen: React.FC<{navigation: any, route: any}> = ({navigation, ro
                   onPress={() => setValue('targetCount', targetCount + 1)}
                   style={[styles.counterBtn, {backgroundColor: BRAND_COLORS.primary}]}
                 >
-                  <Plus size={18} color="#FFF" strokeWidth={3} />
+                  <Plus size={18} color={colors.white} strokeWidth={3} />
                 </Pressable>
               </View>
             ) : (

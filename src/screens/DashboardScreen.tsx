@@ -38,7 +38,7 @@ const HabitCard = ({item, onPress}: {item: any, onPress: () => void}) => {
   return (
     <Pressable 
       onPress={onPress}
-      style={[styles.habitCard, {backgroundColor: colors.card, ...SHADOWS.sm}]}
+      style={[styles.habitCard, {backgroundColor: colors.card, borderColor: colors.border, ...SHADOWS.sm}]}
     >
       <View style={styles.chartContainer}>
         <PieChart
@@ -72,7 +72,7 @@ const HabitCard = ({item, onPress}: {item: any, onPress: () => void}) => {
             {backgroundColor: item.progress === 1 ? colors.success : colors.surfaceAlt}
           ]}
         >
-          <Check size={16} color={item.progress === 1 ? '#FFF' : colors.textTertiary} strokeWidth={3} />
+          <Check size={16} color={item.progress === 1 ? colors.white : colors.textTertiary} strokeWidth={3} />
         </Pressable>
       </View>
     </Pressable>
@@ -210,13 +210,14 @@ const DashboardScreen: React.FC<{navigation: any}> = ({navigation}) => {
               <View 
                 style={[
                   styles.weekCircle,
+                  { backgroundColor: colors.surfaceAlt },
                   item.status === 'done' && {backgroundColor: colors.success},
                   item.status === 'missed' && {backgroundColor: colors.error},
-                  item.status === 'active' && {borderColor: BRAND_COLORS.primary, borderWidth: 2},
+                  item.status === 'active' && {borderColor: BRAND_COLORS.primary, borderWidth: 2, backgroundColor: 'transparent'},
                   item.status === 'pending' && {backgroundColor: colors.surfaceAlt},
                 ]}
               >
-                {item.status === 'done' && <Check size={12} color="#FFF" strokeWidth={4} />}
+                {item.status === 'done' && <Check size={12} color={colors.white} strokeWidth={4} />}
               </View>
             </View>
           ))}
@@ -236,10 +237,10 @@ const DashboardScreen: React.FC<{navigation: any}> = ({navigation}) => {
         {/* AI Tip Card - This is only for premium users */}
         <View style={[styles.aiCard, {backgroundColor: BRAND_COLORS.primary}]}>
           <View style={styles.aiHeader}>
-            <Sparkles size={18} color="#FFF" />
-            <Text style={[typography.subheadMedium, {color: '#FFF', marginLeft: 8}]}>AI INSIGHTS · PRO</Text>
+            <Sparkles size={18} color={colors.white} />
+            <Text style={[typography.subheadMedium, {color: colors.white, marginLeft: 8}]}>AI INSIGHTS · PRO</Text>
           </View>
-          <Text style={[typography.body, {color: '#FFF', marginTop: 12}]}>
+          <Text style={[typography.body, {color: colors.white, marginTop: 12}]}>
             "You are 24% more likely to stick to your Morning Meditation if you do it before 8:00 AM."
           </Text>
         </View>
@@ -250,7 +251,7 @@ const DashboardScreen: React.FC<{navigation: any}> = ({navigation}) => {
         style={[styles.fab, {backgroundColor: BRAND_COLORS.primary}, SHADOWS.xl]}
         onPress={() => navigation.navigate('AddHabit')}
       >
-        <Plus size={24} color="#FFF" strokeWidth={3} />
+        <Plus size={24} color={colors.white} strokeWidth={3} />
       </Pressable>
     </View>
   );

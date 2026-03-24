@@ -67,16 +67,16 @@ const SwipeableHabitItem = ({
     <View style={styles.swipeContainer}>
       <View style={styles.actionRow}>
         <Pressable 
-          style={[styles.actionBtn, {backgroundColor: '#6C5CE7'}]} 
+          style={[styles.actionBtn, {backgroundColor: colors.primary}]} 
           onPress={() => {
             Animated.timing(translateX, {toValue: 0, duration: 200, useNativeDriver: true}).start();
             onEdit();
           }}
         >
-          <Edit2 size={20} color="#FFF" />
+          <Edit2 size={20} color={colors.white} />
         </Pressable>
         <Pressable 
-          style={[styles.actionBtn, {backgroundColor: '#FF7675'}]} 
+          style={[styles.actionBtn, {backgroundColor: colors.warning}]} 
           onPress={() => {
             Animated.timing(translateX, {toValue: 0, duration: 200, useNativeDriver: true}).start();
             onArchive();
@@ -84,19 +84,19 @@ const SwipeableHabitItem = ({
         >
           {
             !isArchived ? 
-            <Archive size={20} color="#FFF" />
+            <Archive size={20} color={colors.white} />
             : 
-            <ArchiveX size={20} color="#FFF" />
+            <ArchiveX size={20} color={colors.white} />
           }
         </Pressable>
         <Pressable 
-          style={[styles.actionBtn, {backgroundColor: '#e74c3c'}]} 
+          style={[styles.actionBtn, {backgroundColor: colors.error}]} 
           onPress={() => {
             Animated.timing(translateX, {toValue: 0, duration: 200, useNativeDriver: true}).start();
             onDelete();
           }}
         >
-          <Trash2 size={20} color="#FFF" />
+          <Trash2 size={20} color={colors.white} />
         </Pressable>
       </View>
       <Animated.View
@@ -110,6 +110,7 @@ const SwipeableHabitItem = ({
             marginHorizontal: 0, // override margin for swiping
             width: width - SPACING.xl * 2,
             alignSelf: 'center',
+            borderColor: colors.border,
           },
         ]}
       >
@@ -146,13 +147,13 @@ const SwipeableHabitItem = ({
           style={[
             styles.checkBtn,
             {
-              backgroundColor: habit.completed ? '#E0EBFF' : colors.surfaceAlt,
+              backgroundColor: habit.completed ? colors.primaryUltraLight : colors.surfaceAlt,
             }
           ]}
         >
           <Check
             size={20}
-            color={habit.completed ? BRAND_COLORS.primary : colors.textTertiary}
+            color={habit.completed ? colors.primary : colors.textTertiary}
             strokeWidth={3}
           />
         </Pressable>
@@ -201,7 +202,6 @@ const styles = StyleSheet.create({
         padding: SPACING.md,
         paddingLeft: SPACING.lg,
         borderWidth: 1,
-        borderColor: '#F0F0F0',
     },
 
 

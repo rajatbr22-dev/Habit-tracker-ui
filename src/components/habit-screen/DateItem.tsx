@@ -28,7 +28,7 @@ const DateItem = ({
         style={[
           typography.caption2,
           {
-            color: isSelected ? '#FFF' : colors.textTertiary,
+            color: isSelected ? colors.white : colors.textTertiary,
             fontWeight: isSelected ? '700' : '500',
           }
         ]}
@@ -39,7 +39,7 @@ const DateItem = ({
         style={[
           typography.bodyMedium,
           {
-            color: isSelected ? '#FFF' : colors.text,
+            color: isSelected ? colors.white : colors.text,
             fontWeight: '700',
             marginTop: 4,
           }

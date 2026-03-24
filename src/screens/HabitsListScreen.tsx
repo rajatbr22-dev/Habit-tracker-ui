@@ -335,8 +335,8 @@ const HabitsListScreen: React.FC<{navigation: any}> = ({navigation}) => {
         style={[styles.fab, SHADOWS.xl, {backgroundColor: BRAND_COLORS.primary}]}
         onPress={() => navigation.navigate('AddHabit')}
       >
-        <Plus size={20} color="#FFF" strokeWidth={3} />
-        <Text style={[typography.buttonSmall, {color: '#FFF', marginLeft: 8}]}>
+        <Plus size={20} color={colors.white} strokeWidth={3} />
+        <Text style={[typography.buttonSmall, {color: colors.white, marginLeft: 8}]}>
           Add Habit
         </Text>
       </Pressable>

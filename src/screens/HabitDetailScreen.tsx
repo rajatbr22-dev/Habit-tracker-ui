@@ -57,10 +57,10 @@ const HeatmapCell = ({ date, data, colors }: { date: string, data: any, colors: 
         />
       </Pressable>
       {showTooltip && (
-        <View style={[styles.tooltip, { backgroundColor: colors.card, ...SHADOWS.md }]}>
+        <View style={[styles.tooltip, { backgroundColor: colors.card, ...SHADOWS.md, borderColor: colors.border, borderWidth: 1 }]}>
           <Text style={[styles.tooltipText, { color: colors.text }]}>{date}</Text>
           <Text style={[styles.tooltipStatus, { color: data?.completed ? colors.success : colors.textSecondary }]}>
-            {data?.completed ? 'Complted' : 'Missed'}
+            {data?.completed ? 'Completed' : 'Missed'}
           </Text>
         </View>
       )}
@@ -111,7 +111,7 @@ const HabitDetailScreen: React.FC<{ route: any, navigation: any }> = ({ route, n
 
   const pieData = [
     { value: completionRate, color: BRAND_COLORS.primary },
-    { value: 100 - completionRate, color: BRAND_COLORS.primaryUltraLight },
+    { value: 100 - completionRate, color: colors.surfaceAlt },
   ];
 
   // Prepare heatmap data: last 35 days or so
@@ -230,11 +230,11 @@ const HabitDetailScreen: React.FC<{ route: any, navigation: any }> = ({ route, n
           </View>
 
           {/* AI performance tip */}
-          <View style={[styles.tipCard, { backgroundColor: colors.primary }]}>
-            <Sparkles size={20} color="#FFF" />
+          <View style={[styles.tipCard, { backgroundColor: BRAND_COLORS.primary }]}>
+            <Sparkles size={20} color={colors.white} />
             <View style={{ flex: 1, marginLeft: SPACING.md }}>
               <Text style={[typography.subheadMedium, { color: colors.white }]}>AI Performance Tip</Text>
-              <Text style={[typography.caption1, { color: colors.primaryUltraLight }]}>
+              <Text style={[typography.caption1, { color: colors.white, opacity: 0.8 }]}>
                 {`You're 24% more likely to complete this habit when you do it before 9:00 AM.`}
               </Text>
             </View>

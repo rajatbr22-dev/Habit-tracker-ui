@@ -18,7 +18,7 @@ const CategoryPill = ({
         styles.categoryPill,
         {
           backgroundColor: isActive ? BRAND_COLORS.primary : colors.card,
-          borderColor: isActive ? 'transparent' : '#F0F0F0',
+          borderColor: isActive ? 'transparent' : colors.border,
           borderWidth: isActive ? 0 : 1,
         }
       ]}
@@ -26,7 +26,7 @@ const CategoryPill = ({
       <Text
         style={[
           typography.subheadMedium,
-          {color: isActive ? '#FFF' : colors.textSecondary}
+          {color: isActive ? colors.white : colors.textSecondary}
         ]}
       >
         {label}
