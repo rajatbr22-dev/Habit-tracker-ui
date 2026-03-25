@@ -11,10 +11,16 @@ import {ThemeProvider} from './src/theme';
 import AppNavigation from './src/navigation';
 import { useUIStore } from './src/store/useUIStore';
 import Alert from './src/components/Alert';
+import { useNotificationInit } from './src/hooks/useNotificationInit';
 
 function App(): React.JSX.Element {
+  // 1. Hooks first, in a stable order
   const { themeMode, activeAlert, hideAlert } = useUIStore();
   const systemScheme = useColorScheme();
+  
+  // 2. Custom initialization hooks
+  useNotificationInit();
+
   const isDarkMode = themeMode === 'system' ? systemScheme === 'dark' : themeMode === 'dark';
 
   return (
@@ -37,5 +43,6 @@ function App(): React.JSX.Element {
     </SafeAreaProvider>
   );
 }
+
 
 export default App;

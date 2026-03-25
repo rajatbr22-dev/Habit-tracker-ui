@@ -267,6 +267,7 @@ const styles = StyleSheet.create({
   description: {
     textAlign: 'center',
     lineHeight: 24,
+    marginTop: 2
   },
   footer: {
     alignItems: 'center',

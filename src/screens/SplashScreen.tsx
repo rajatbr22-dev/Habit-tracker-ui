@@ -106,7 +106,9 @@ const SplashScreen: React.FC<SplashScreenProps> = ({navigation}) => {
     if (token) {
       navigation.replace('Main');
     } else {
-      navigation.replace('Login');
+      navigation.replace('Auth', {
+        screen: 'Login',
+      });
     }
   };
 

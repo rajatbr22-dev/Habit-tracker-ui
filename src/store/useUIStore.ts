@@ -17,13 +17,7 @@ interface UIState {
   themeMode: ThemeMode;
   setThemeMode: (mode: ThemeMode) => void;
   
-  // Notification State
-  notifications: Notification[];
-  addNotification: (notif: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void;
-  markAsRead: (id: string) => void;
-  clearNotifications: () => void;
-  
-  // Alert State (Global)
+  // Alert State (Global) - Used for toast-like notifications
   activeAlert: (Omit<Notification, 'id' | 'timestamp' | 'read'> & { visible: boolean }) | null;
   showAlert: (notif: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void;
   hideAlert: () => void;
@@ -34,23 +28,6 @@ export const useUIStore = create<UIState>()(
     (set) => ({
       themeMode: 'system',
       setThemeMode: (mode) => set({ themeMode: mode }),
-
-      notifications: [],
-      addNotification: (notif) => set((state) => ({
-        notifications: [
-          {
-            ...notif,
-            id: Math.random().toString(36).substring(7),
-            timestamp: Date.now(),
-            read: false,
-          },
-          ...state.notifications
-        ]
-      })),
-      markAsRead: (id) => set((state) => ({
-        notifications: state.notifications.map(n => n.id === id ? { ...n, read: true } : n)
-      })),
-      clearNotifications: () => set({ notifications: [] }),
 
       activeAlert: null,
       showAlert: (notif) => set({ activeAlert: { ...notif, visible: true } }),
@@ -64,3 +41,4 @@ export const useUIStore = create<UIState>()(
     }
   )
 );
+

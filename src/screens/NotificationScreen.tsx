@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   FlatList,
   Pressable,
   TouchableOpacity,
+  RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { 
@@ -20,6 +22,7 @@ import {
 import { useTheme } from '../theme';
 import { SPACING, RADII, LAYOUT } from '../theme/spacing';
 import { useUIStore, Notification } from '../store/useUIStore';
+import { useNotificationStore } from '../store/useNotificationStore';
 import EmptyState from '../components/EmptyState';
 
 const NotificationIcon = ({ type, size = 20 }: { type: Notification['type'], size?: number }) => {
@@ -34,7 +37,8 @@ const NotificationIcon = ({ type, size = 20 }: { type: Notification['type'], siz
 
 const NotificationItem = ({ item }: { item: Notification }) => {
   const { colors, typography } = useTheme();
-  const markAsRead = useUIStore(state => state.markAsRead);
+  const markAsRead = useNotificationStore(state => state.markAsRead);
+  const deleteNotification = useNotificationStore(state => state.deleteNotification);
 
   const timeAgo = (timestamp: number) => {
     const seconds = Math.floor((Date.now() - timestamp) / 1000);
@@ -48,20 +52,22 @@ const NotificationItem = ({ item }: { item: Notification }) => {
 
   return (
     <Pressable 
-      onPress={() => markAsRead(item.id)}
+      onPress={() => !item.read && markAsRead(item.id)}
       style={[
         styles.card, 
         { borderColor: colors.border, backgroundColor: colors.card },
         !item.read && { borderLeftWidth: 4, borderLeftColor: colors.primary }
       ]}
     >
-      <View style={[styles.iconContainer, { backgroundColor: colors.surfaceAlt }]}>
-        <NotificationIcon type={item.type} />
-      </View>
       <View style={styles.content}>
         <View style={styles.cardHeader}>
           <Text style={[typography.bodyMedium, { color: colors.text, fontWeight: '700' }]}>{item.title}</Text>
-          <Text style={[typography.caption2, { color: colors.textSecondary }]}>{timeAgo(item.timestamp)}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={[typography.caption2, { color: colors.textSecondary }]}>{timeAgo(item.timestamp)}</Text>
+            <TouchableOpacity onPress={() => deleteNotification(item.id)}>
+                <Trash2 size={14} color={colors.error} />
+            </TouchableOpacity>
+          </View>
         </View>
         <Text style={[typography.subhead, { color: colors.textSecondary, marginTop: 4 }]} numberOfLines={2}>
           {item.message}
@@ -74,7 +80,17 @@ const NotificationItem = ({ item }: { item: Notification }) => {
 const NotificationScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const { colors, typography } = useTheme();
   const insets = useSafeAreaInsets();
-  const { notifications, clearNotifications } = useUIStore();
+  const { 
+    notifications, 
+    fetchNotifications, 
+    markAllAsRead, 
+    loading,
+    clearNotifications 
+  } = useNotificationStore();
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -88,10 +104,10 @@ const NotificationScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         </TouchableOpacity>
         <Text style={[typography.title2, { color: colors.text }]}>Notifications</Text>
         <TouchableOpacity 
-          onPress={clearNotifications}
+          onPress={markAllAsRead}
           style={[styles.backBtn, { backgroundColor: colors.surfaceAlt }]}
         >
-          <Trash2 size={20} color={colors.textSecondary} />
+          <CheckCircle size={20} color={colors.success} />
         </TouchableOpacity>
       </View>
 
@@ -100,18 +116,30 @@ const NotificationScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <NotificationItem item={item} />}
         contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + SPACING.xl }]}
-        ListEmptyComponent={
-          <View style={styles.emptyWrap}>
-            <EmptyState 
-              title="No Notifications" 
-              description="When you get alerts about your habits, they'll show up here."
+        refreshControl={
+            <RefreshControl 
+                refreshing={loading} 
+                onRefresh={fetchNotifications} 
+                tintColor={colors.primary}
             />
-          </View>
+        }
+        ListEmptyComponent={
+          !loading ? (
+            <View style={styles.emptyWrap}>
+              <EmptyState 
+                title="No Notifications" 
+                description="When you get alerts about your habits, they'll show up here."
+              />
+            </View>
+          ) : (
+            <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 50 }} />
+          )
         }
       />
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
