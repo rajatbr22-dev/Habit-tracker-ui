@@ -26,6 +26,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardService } from '../services/dashboard.services';
 import { useUIStore } from '../store/useUIStore';
+import { useNotificationStore } from '../store/useNotificationStore';
 
 const {width} = Dimensions.get('window');
 
@@ -99,7 +100,8 @@ const StatCard = ({title, value, icon: Icon, color}: any) => {
 const DashboardScreen: React.FC<{navigation: any}> = ({navigation}) => {
   const {colors, typography} = useTheme();
   const insets = useSafeAreaInsets();
-  const { notifications, addNotification, showAlert, hideAlert } = useUIStore();
+  const { showAlert, hideAlert } = useUIStore();
+  const { notifications, addNotification, unreadCount } = useNotificationStore();
 
   const userName = useAuthStore.getState().user?.displayName;
 
@@ -151,15 +153,18 @@ const DashboardScreen: React.FC<{navigation: any}> = ({navigation}) => {
   })
 
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  // const unreadCount = notifications.filter(n => !n.read).length; // Now getting from store
 
   React.useEffect(() => {
     // Mock a notification if none exists for demo
     if (notifications.length === 0) {
       const mockNotif = {
+        id: 'welcome-notif',
         title: 'Welcome to HabitTracker!',
         message: 'Start by adding your first habit to track your progress.',
         type: 'info' as const,
+        timestamp: Date.now(),
+        read: false,
       };
       addNotification(mockNotif);
       showAlert(mockNotif);

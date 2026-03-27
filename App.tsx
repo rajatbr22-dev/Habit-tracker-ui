@@ -30,7 +30,7 @@ function App(): React.JSX.Element {
         <AppNavigation />
         
         {/* Global Alert */}
-        {activeAlert && (
+        {activeAlert && activeAlert.type && (
           <Alert
             visible={activeAlert.visible}
             type={activeAlert.type}

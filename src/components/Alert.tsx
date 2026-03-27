@@ -125,8 +125,8 @@ const Alert: React.FC<AlertProps> = ({
   const glowAnim = useRef(new Animated.Value(0)).current;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const tokens = TOKENS[type];
-  const Icon = ICONS[type];
+  const tokens = TOKENS[type] || TOKENS.info;
+  const Icon = ICONS[type] || ICONS.info;
 
   const show = () => {
     Animated.parallel([
