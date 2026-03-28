@@ -27,6 +27,8 @@ api.interceptors.request.use(
 );
 
 
+import { resetToAuth } from '../navigation/NavigationService';
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -35,8 +37,8 @@ api.interceptors.response.use(
 
       await AsyncStorage.removeItem('userToken');
 
-      // Optional: navigate to login screen
-      navigation.navigate('Login');
+      // Navigate to login screen via Auth stack reset
+      resetToAuth();
     }
 
     return Promise.reject(error);

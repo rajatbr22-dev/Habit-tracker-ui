@@ -131,9 +131,11 @@ const RootNavigator: React.FC = () => (
 // App Navigation (wraps everything in NavigationContainer)
 // ──────────────────────────────────────────────
 
+import { navigationRef } from './NavigationService';
+
 const AppNavigation: React.FC = () => (
   <QueryClientProvider client={queryClient}>
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <RootNavigator />
     </NavigationContainer>
   </QueryClientProvider>

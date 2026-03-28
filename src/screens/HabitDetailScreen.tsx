@@ -69,7 +69,7 @@ const HeatmapCell = ({ date, data, colors }: { date: string, data: any, colors: 
 };
 
 const HabitDetailScreen: React.FC<{ route: any, navigation: any }> = ({ route, navigation }) => {
-  const { colors, typography } = useTheme();
+  const { colors, typography, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { habitId } = route.params;
 
@@ -110,7 +110,7 @@ const HabitDetailScreen: React.FC<{ route: any, navigation: any }> = ({ route, n
   const currentMonth = analytics?.monthlyProgress?.slice(-1)[0];
 
   const pieData = [
-    { value: completionRate, color: BRAND_COLORS.primary },
+    { value: completionRate, color: habit?.color },
     { value: 100 - completionRate, color: colors.surfaceAlt },
   ];
 
@@ -161,8 +161,8 @@ const HabitDetailScreen: React.FC<{ route: any, navigation: any }> = ({ route, n
               centerLabelComponent={() => {
                 return (
                   <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                    <Flame size={24} color={BRAND_COLORS.primary} fill={BRAND_COLORS.primary} />
-                    <Text style={[typography.largeTitle, { color: colors.text }]}>{habit?.longestStreak || 0}</Text>
+                    <Flame size={24} color={habit?.color} fill={habit?.color} />
+                    <Text style={[typography.largeTitle, { color: isDark ? "#544d4dff" : colors.text }]}>{habit?.currentStreak || 0}</Text>
                     <Text style={[typography.caption2, { color: colors.textSecondary }]}>DAY STREAK</Text>
                   </View>
                 );
@@ -186,7 +186,7 @@ const HabitDetailScreen: React.FC<{ route: any, navigation: any }> = ({ route, n
           <View style={styles.statsGrid}>
             <View style={[styles.smallStatCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={[typography.caption2, { color: colors.textSecondary }]}>Total Days</Text>
-              <Text style={[typography.title3, { color: colors.text }]}>{analytics?.totalCheckIns || 0}</Text>
+              <Text style={[typography.title3, { color: colors.text }]}>{analytics?.totalExpectedCount || 0}</Text>
             </View>
             <View style={[styles.smallStatCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={[typography.caption2, { color: colors.textSecondary }]}>Best Streak</Text>
@@ -206,8 +206,8 @@ const HabitDetailScreen: React.FC<{ route: any, navigation: any }> = ({ route, n
           <View style={[styles.section, { backgroundColor: colors.card, ...SHADOWS.sm }]}>
             <View style={styles.sectionHeader}>
               <View>
-                <Text style={[typography.title2, { color: colors.text }]}>Activity History</Text>
-                <Text style={[typography.caption1, { color: colors.textSecondary }]}>Last 5 Weeks</Text>
+                <Text style={[typography.title3, { color: colors.text }]}>Activity History</Text>
+                {/* <Text style={[typography.caption1, { color: colors.textSecondary }]}>Last 5 Weeks</Text> */}
               </View>
               <Pressable>
                 <Info size={18} color={colors.textSecondary} />

@@ -3,7 +3,11 @@ import api from "../api/axios";
 import { io, Socket } from "socket.io-client";
 import { WS_URL } from '@env';
 
-const SOCKET_URL = WS_URL; // Should be moved to config/env
+const SOCKET_URL = WS_URL;
+
+if (!SOCKET_URL) {
+    console.warn("NotificationService: WS_URL is not defined in environment variables. Socket connection may fail.");
+}
 
 let socket: Socket | null = null;
 
@@ -27,8 +31,9 @@ export const NotificationService = {
             socket.on("connect_error", (err) => {
                 console.error("Socket connection error details:", {
                     message: err.message,
-                    context: (err as any).context, // Some socket errors provide additional context
-                    description: (err as any).description, // Description often contains lower-level error
+                    url: SOCKET_URL,
+                    context: (err as any).context,
+                    description: (err as any).description,
                 });
 
             });

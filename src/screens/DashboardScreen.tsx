@@ -33,7 +33,7 @@ const {width} = Dimensions.get('window');
 
 const HabitCard = ({item, onPress}: {item: any, onPress: () => void}) => {
 
-  const {colors, typography} = useTheme();
+  const {colors, typography, isDark} = useTheme();
 
   // const userName = useAuthStore.getState().user?.name;
 
@@ -49,10 +49,10 @@ const HabitCard = ({item, onPress}: {item: any, onPress: () => void}) => {
           innerRadius={26}
           data={[
             {value: item.progress * 100, color: item.color},
-            {value: (1 - item.progress) * 100, color: colors.surfaceAlt},
+            {value: (1 - item.progress) * 100, color: isDark ? colors.textSecondary : colors.surfaceAlt},
           ]}
           centerLabelComponent={() => (
-            <Text style={[typography.caption2, {fontWeight: '700', color: colors.text}]}>
+            <Text style={[typography.caption2, {fontWeight: '700', color: isDark ? "#2c2b2bff" : colors.text}]}>
               {Math.round(item.progress * 100)}%
             </Text>
           )}
@@ -63,8 +63,8 @@ const HabitCard = ({item, onPress}: {item: any, onPress: () => void}) => {
       </Text>
       <View style={styles.habitFooter}>
         <View style={styles.streakRow}>
-          <Flame size={12} color={BRAND_COLORS.primary} fill={BRAND_COLORS.primary} />
-          <Text style={[typography.caption2, {color: colors.textSecondary, marginLeft: 4}]}>
+          <Flame size={16} color={item.color} fill={item.color} />
+          <Text style={[typography.caption1, {color: colors.textSecondary, marginLeft: 4}]}>
             {item.streak}d
           </Text>
         </View>

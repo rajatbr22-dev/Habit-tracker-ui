@@ -230,23 +230,23 @@ const Alert: React.FC<AlertProps> = ({
     >
       {/* Glow backdrop */}
       <Animated.View
-        // style={[
-        //   styles.glow,
-        //   { backgroundColor: tokens.glow, opacity: glowOpacity },
-        // ]}
+        style={[
+          styles.glow,
+          { backgroundColor: tokens.glow, opacity: glowOpacity },
+        ]}
       />
 
       {/* Card */}
       <View style={[styles.card, { backgroundColor: tokens.bg, borderColor: tokens.border }]}>
         {/* Left accent bar */}
-        {/* <View style={[styles.accentBar, { backgroundColor: tokens.border }]} /> */}
+        <View style={[styles.accentBar, { backgroundColor: tokens.border }]} />
 
         <View style={styles.content}>
-          {/* {showIcon && (
+          {showIcon && (
             <View style={styles.iconWrap}>
               <Icon color={tokens.icon} />
             </View>
-          )} */}
+          )}
 
           <View style={styles.textBlock}>
             {title ? (
