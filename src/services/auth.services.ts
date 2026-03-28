@@ -50,16 +50,12 @@ const AuthService = {
     },
 
     forgotPassword: async (formData: { email: string; newPassword: string }) : Promise<AxiosResponse> => {
-
         try {
             const response = await api.post('/auth/forgot-password', formData);
-
             return response.data;
         } catch (error) {
             const err = error as AxiosError;
-
             console.log("api error forgot password", err)
-
             if (err.response) {
                 throw err.response.data;
             } else if (err.request) {
@@ -68,7 +64,40 @@ const AuthService = {
                 throw new Error(err.message);
             }
         }
+    },
 
+    updateProfile: async (formData: { displayName?: string; email?: string }) : Promise<AxiosResponse> => {
+        try {
+            const response = await api.patch('/auth/profile', formData);
+            return response.data;
+        } catch (error) {
+            const err = error as AxiosError;
+            console.log("api error update profile", err)
+            if (err.response) {
+                throw err.response.data;
+            } else if (err.request) {
+                throw new Error("No response from server");
+            } else {
+                throw new Error(err.message);
+            }
+        }
+    },
+
+    updateNotificationSettings: async (settings: { notificationsEnabled: boolean }) : Promise<AxiosResponse> => {
+        try {
+            const response = await api.patch('/auth/notifications', settings);
+            return response.data;
+        } catch (error) {
+            const err = error as AxiosError;
+            console.log("api error update notifications", err)
+            if (err.response) {
+                throw err.response.data;
+            } else if (err.request) {
+                throw new Error("No response from server");
+            } else {
+                throw new Error(err.message);
+            }
+        }
     }
 } 
 

@@ -8,6 +8,10 @@ import {
   Switch,
   Dimensions,
   Platform,
+  TextInput,
+  ActivityIndicator,
+  Alert,
+  Share,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
@@ -24,13 +28,19 @@ import {
   Star,
   HelpCircle,
   FileText,
+  X,
+  Check,
 } from 'lucide-react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import {useTheme} from '../theme';
 import {BRAND_COLORS} from '../theme/colors';
 import {RADII, SHADOWS, SPACING} from '../theme/spacing';
 import { getItem, removeItem } from '../lib/storage';
 
 import { useUIStore, ThemeMode as UIThemeMode } from '../store/useUIStore';
+import { useAuthStore } from '../store/useAuthStore';
+import AuthService from '../services/auth.services';
+import HabitService from '../services/habit.services';
 
 const {width} = Dimensions.get('window');
 
@@ -38,14 +48,78 @@ const SettingsScreen: React.FC<{navigation: any}> = ({navigation}) => {
   const {colors, typography, mode, isDark} = useTheme();
   const insets = useSafeAreaInsets();
   const { themeMode, setThemeMode } = useUIStore();
+  const { user, updateUser } = useAuthStore();
 
   const [iCloudSync, setICloudSync] = useState(true);
+  const [notifications, setNotifications] = useState(true);
+  const [reminderTime, setReminderTime] = useState(new Date(new Date().setHours(8, 0, 0, 0)));
+  const [showTimePicker, setShowTimePicker] = useState(false);
+
+  // Profile Editing State
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(user?.displayName || '');
+  const [editEmail, setEditEmail] = useState(user?.email || '');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleLogout = async () => {
     await removeItem('userToken');
     setTimeout(() => {
       navigation.replace('Auth');
     }, 500);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!editName || !editEmail) {
+      Alert.alert('Error', 'Name and Email are required');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await AuthService.updateProfile({ displayName: editName, email: editEmail });
+      updateUser({ displayName: editName, email: editEmail });
+      setIsEditing(false);
+      Alert.alert('Success', 'Profile updated successfully');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to update profile');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleToggleNotifications = async (value: boolean) => {
+    const previous = notifications;
+    setNotifications(value);
+    try {
+      await AuthService.updateNotificationSettings({ notificationsEnabled: value });
+    } catch (error: any) {
+      setNotifications(previous);
+      Alert.alert('Error', error.message || 'Failed to update notification settings');
+    }
+  };
+
+  const handleTimeChange = (event: any, selectedDate?: Date) => {
+    setShowTimePicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      setReminderTime(selectedDate);
+      // Optional: Add API call here if there's an endpoint for default reminder time
+    }
+  };
+
+  const handleExportCSV = async () => {
+    setIsExporting(true);
+    try {
+      const csvData = await HabitService.exportHabitsCSV();
+      await Share.share({
+        message: csvData as unknown as string,
+        title: 'Habit Data Export',
+      });
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to export habit data');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const ThemeOption = ({ mode: optionMode, label, icon: Icon }: { mode: UIThemeMode, label: string, icon: any }) => (
@@ -128,15 +202,75 @@ const SettingsScreen: React.FC<{navigation: any}> = ({navigation}) => {
         {/* Profile Section */}
         <View style={[styles.profileSection, {backgroundColor: colors.card}]}>
           <View style={[styles.avatar, {backgroundColor: BRAND_COLORS.primary}]}>
-            <Text style={[typography.title1, {color: '#FFF'}]}>AR</Text>
+            <Text style={[typography.title1, {color: '#FFF'}]}>
+              {user?.displayName ? user.displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'AR'}
+            </Text>
           </View>
+          
           <View style={styles.profileInfo}>
-            <Text style={[typography.title2, {color: colors.text, fontWeight: '800'}]}>Alex Rivera</Text>
-            <Text style={[typography.subhead, {color: colors.textSecondary, marginTop: 2}]}>alex.rivera@design.com</Text>
+            {isEditing ? (
+              <View>
+                <TextInput
+                  style={[styles.editInput, { color: colors.text, borderBottomColor: colors.border }]}
+                  value={editName}
+                  onChangeText={setEditName}
+                  placeholder="Display Name"
+                  placeholderTextColor={colors.textTertiary}
+                />
+                <TextInput
+                  style={[styles.editInput, { color: colors.text, borderBottomColor: colors.border, marginTop: 8 }]}
+                  value={editEmail}
+                  onChangeText={setEditEmail}
+                  placeholder="Email"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  placeholderTextColor={colors.textTertiary}
+                />
+              </View>
+            ) : (
+              <View>
+                <Text style={[typography.title2, {color: colors.text, fontWeight: '800'}]}>
+                  {user?.displayName || 'Alex Rivera'}
+                </Text>
+                <Text style={[typography.subhead, {color: colors.textSecondary, marginTop: 2}]}>
+                  {user?.email || 'alex.rivera@design.com'}
+                </Text>
+              </View>
+            )}
           </View>
-          <Pressable style={[styles.editBtn, {backgroundColor: isDark ? colors.surfaceAlt : '#EEF2FF'}]}>
-            <Pencil size={18} color={BRAND_COLORS.primary} />
-          </Pressable>
+
+          {isEditing ? (
+            <View style={styles.editActions}>
+              <Pressable 
+                onPress={handleSaveProfile} 
+                disabled={isSaving}
+                style={[styles.actionBtn, { backgroundColor: BRAND_COLORS.primary + '20' }]}
+              >
+                {isSaving ? (
+                  <ActivityIndicator size="small" color={BRAND_COLORS.primary} />
+                ) : (
+                  <Check size={20} color={BRAND_COLORS.primary} />
+                )}
+              </Pressable>
+              <Pressable 
+                onPress={() => {
+                  setIsEditing(false);
+                  setEditName(user?.displayName || '');
+                  setEditEmail(user?.email || '');
+                }} 
+                style={[styles.actionBtn, { backgroundColor: colors.error + '20', marginLeft: 8 }]}
+              >
+                <X size={20} color={colors.error} />
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable 
+              onPress={() => setIsEditing(true)}
+              style={[styles.editBtn, {backgroundColor: isDark ? colors.surfaceAlt : '#EEF2FF'}]}
+            >
+              <Pencil size={18} color={BRAND_COLORS.primary} />
+            </Pressable>
+          )}
         </View>
 
         {/* Pro Banner */}
@@ -169,16 +303,29 @@ const SettingsScreen: React.FC<{navigation: any}> = ({navigation}) => {
           <SettingItem 
             Icon={Bell} 
             label="Notifications" 
-            value="On" 
+            type="toggle"
+            toggleValue={notifications}
+            onToggle={handleToggleNotifications}
             iconBg="#FF9F0A"
           />
           <SettingItem 
             Icon={Clock} 
             label="Default Reminder" 
-            value="08:00 AM" 
+            value={reminderTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} 
+            onPress={() => setShowTimePicker(true)}
             iconBg={BRAND_COLORS.primary}
           />
         </View>
+
+        {showTimePicker && (
+          <DateTimePicker
+            value={reminderTime}
+            mode="time"
+            is24Hour={false}
+            display="default"
+            onChange={handleTimeChange}
+          />
+        )}
 
         {/* Account & Data */}
         <Text style={[styles.sectionTitle, {color: colors.textSecondary}]}>ACCOUNT & DATA</Text>
@@ -192,13 +339,15 @@ const SettingsScreen: React.FC<{navigation: any}> = ({navigation}) => {
             iconBg="#34C759"
           />
           <SettingItem 
-            Icon={Download} 
+            Icon={isExporting ? ActivityIndicator : Download} 
             label="Export Data (CSV)" 
+            onPress={handleExportCSV}
             iconBg="#007AFF"
           />
           <SettingItem 
             Icon={Trash2} 
             label="Delete Account" 
+            onPress={() => Alert.alert('Delete Account', 'This action cannot be undone.', [{text: 'Cancel'}, {text: 'Delete', style: 'destructive'}])}
             iconBg="#FF3B30"
           />
         </View>
@@ -271,6 +420,23 @@ const styles = StyleSheet.create({
   profileInfo: {
     flex: 1,
     marginLeft: 16,
+  },
+  editActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editInput: {
+    fontSize: 16,
+    fontWeight: '600',
+    paddingVertical: 4,
+    borderBottomWidth: 1,
   },
   editBtn: {
     width: 44,

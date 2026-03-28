@@ -25,6 +25,7 @@ import { useQuery } from '@tanstack/react-query';
 import { DashboardService } from '../services/dashboard.services';
 import { AnalyticsSkeleton } from '../components/AnalyticsSkeleton';
 import ErrorView from '../components/ErrorView';
+import { AnalyticsService } from '../services/analytics.services';
 
 const { width } = Dimensions.get('window');
 
@@ -68,18 +69,37 @@ const AnalyticsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const [timeRange, setTimeRange] = useState('Week');
 
-  const { data: analyticsData, isLoading, isError, refetch, isRefetching } = useQuery({
+
+  const { 
+    data: analyticsSummaryData, 
+    isLoading: analyticsSummaryLoading, 
+    isError: analyticsSummaryError, 
+    refetch: analyticsSummaryRefetch, 
+    isRefetching: analyticsSummaryIsRefetching 
+  } = useQuery({
+
     queryKey: ['analytics-summary'],
-    queryFn: async () => {
-      const response = await DashboardService.getSummaryHabits();
-      return response.data;
-    },
-  });
+
+    queryFn: () => AnalyticsService.getAnalyticsSummary()
+
+  }); 
+
+
+  console.log("Analytics summary data: ", analyticsSummaryData?.data);
+  
+
+  // const { data: analyticsData, isLoading, isError, refetch, isRefetching } = useQuery({
+  //   queryKey: ['analytics-summary'],
+  //   queryFn: async () => {
+  //     const response = await DashboardService.getSummaryHabits();
+  //     return response.data;
+  //   },
+  // });
 
   const USE_MOCK = true; // Set to false to use real data
-  const data = USE_MOCK ? MOCK_DATA : analyticsData;
+  const data = MOCK_DATA;
 
-  const summary = data?.summary;
+  const summary = analyticsSummaryData?.data;
   const weeklyOverview = data?.weeklyOverview;
   const perHabit = data?.perHabit;
 
@@ -103,8 +123,8 @@ const AnalyticsScreen: React.FC = () => {
     }));
   }, [perHabit]);
 
-  if (isLoading && !USE_MOCK) return <AnalyticsSkeleton />;
-  if (isError && !USE_MOCK) return <ErrorView onRetry={refetch} />;
+  if (analyticsSummaryLoading && !USE_MOCK) return <AnalyticsSkeleton />;
+  if (analyticsSummaryError && !USE_MOCK) return <ErrorView onRetry={analyticsSummaryRefetch} />;
 
   return (
     <ScrollView
@@ -114,7 +134,7 @@ const AnalyticsScreen: React.FC = () => {
         paddingBottom: SPACING['2xl']
       }}
       refreshControl={
-        <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
+        <RefreshControl refreshing={analyticsSummaryIsRefetching} onRefresh={analyticsSummaryRefetch} tintColor={colors.primary} />
       }
     >
       <View style={styles.header}>
@@ -160,7 +180,7 @@ const AnalyticsScreen: React.FC = () => {
           </View>
           <Text style={[typography.caption1, { color: colors.textSecondary, marginTop: SPACING.sm }]}>Completion</Text>
           <Text style={[typography.title1, { color: colors.text }]}>
-            {summary?.averageCompletionRate ? `${Math.round(summary.averageCompletionRate * 100)}%` : '0%'}
+            {summary?.averageCompletionRate ? `${Math.round((summary.averageCompletionRate) * 100)}%` : '0%'}
           </Text>
         </View>
 

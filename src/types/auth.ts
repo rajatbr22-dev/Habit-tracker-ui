@@ -56,6 +56,7 @@ export type AuthStore = {
   token: string | null;
   setAuth: (data: { user: any; token: string }) => void;
   logout: () => void;
+  updateUser: (user: Partial<User>) => void;
 };
 
 

@@ -231,16 +231,12 @@ const HabitService = {
 
 
     getDetailedHabit: async (id: string) : Promise<AxiosResponse> => {
-        
         try {
             const response = await api.get(`/habits/${id}/detail`);
-
             return response.data;
         } catch (error) {
             const err = error as AxiosError;
-
-            console.log("api error registration", err)
-
+            console.log("api error getting detailed habit", err)
             if (err.response) {
                 throw err.response.data;
             } else if (err.request) {
@@ -249,11 +245,24 @@ const HabitService = {
                 throw new Error(err.message);
             }
         }
-
     },
 
-
-
+    exportHabitsCSV: async () : Promise<AxiosResponse> => {
+        try {
+            const response = await api.get('/habits/export');
+            return response.data;
+        } catch (error) {
+            const err = error as AxiosError;
+            console.log("api error export habits", err)
+            if (err.response) {
+                throw err.response.data;
+            } else if (err.request) {
+                throw new Error("No response from server");
+            } else {
+                throw new Error(err.message);
+            }
+        }
+    },
 }
 
 
