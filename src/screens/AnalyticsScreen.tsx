@@ -146,8 +146,14 @@ const AnalyticsScreen: React.FC = () => {
     return weeklyOverview?.dailyRates?.map((rate: number, index: number) => ({
       value: Math.round(rate * 100),
       label: days[index],
+
+      labelTextStyle: {
+        color: isDark ? colors.white : colors.black,
+        // fontSize: 10,
+      },
+
     }));
-  }, [weeklyOverview]);
+  }, [weeklyOverview, isDark, colors]);
 
   const barChartData = useMemo(() => {
     if (!perHabit) return [];
@@ -273,8 +279,9 @@ const AnalyticsScreen: React.FC = () => {
             data={lineChartData}
             width={chartWidth}
             height={160}
-            spacing={chartWidth / 6.5}
-            initialSpacing={11}
+            spacing={40}
+            initialSpacing={10.5}
+            endSpacing={10}
             color={colors.primary}
             thickness={3}
             startFillColor={colors.primary}
@@ -289,6 +296,7 @@ const AnalyticsScreen: React.FC = () => {
             dataPointsColor={BRAND_COLORS.primary}
             dataPointsRadius={5}
             focusedDataPointRadius={7}
+            adjustToWidth={true}
             pointerConfig={{
               pointerStripHeight: 140,
               pointerStripColor: BRAND_COLORS.primary,
@@ -397,7 +405,7 @@ const AnalyticsScreen: React.FC = () => {
             isAnimated
             animationDuration={800}
             scrollAnimation
-            xAxisLabelTextStyle={{ color: isDark ? "#FFFFFF" : colors.textSecondary, fontSize: 10 }}
+            xAxisLabelTextStyle={{ color: isDark ? colors.white : colors.textSecondary, fontSize: 10 }}
             renderTooltip={(item: any) => {
               return (
                 <View style={[styles.tooltipContainer, { backgroundColor: colors.card, ...SHADOWS.md }]}>
