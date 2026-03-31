@@ -22,35 +22,11 @@ import { useTheme } from '../theme';
 import { BRAND_COLORS, SEMANTIC_COLORS } from '../theme/colors';
 import { RADII, SHADOWS, SPACING, LAYOUT } from '../theme/spacing';
 import { useQuery } from '@tanstack/react-query';
-import { DashboardService } from '../services/dashboard.services';
 import { AnalyticsSkeleton } from '../components/AnalyticsSkeleton';
 import ErrorView from '../components/ErrorView';
 import { AnalyticsService } from '../services/analytics.services';
 
 const { width } = Dimensions.get('window');
-
-const MOCK_DATA = {
-  summary: {
-    totalHabits: 8,
-    activeHabits: 5,
-    averageCompletionRate: 0.78,
-    currentOverallStreak: 12,
-    longestOverallStreak: 24,
-    totalCheckIns: 156,
-  },
-  perHabit: [
-    { habitId: '1', habitName: 'Morning Meditation', habitColor: BRAND_COLORS.primary, completionRate: 0.95, currentStreak: 15, longestStreak: 30, totalCompletions: 45 },
-    { habitId: '2', habitName: 'Drink 2L Water', habitColor: '#0984E3', completionRate: 0.82, currentStreak: 8, longestStreak: 12, totalCompletions: 38 },
-    { habitId: '3', habitName: 'Read 20 Pages', habitColor: '#00B894', completionRate: 0.65, currentStreak: 3, longestStreak: 7, totalCompletions: 22 },
-    { habitId: '4', habitName: 'Gym Workout', habitColor: '#E17055', completionRate: 0.45, currentStreak: 1, longestStreak: 5, totalCompletions: 12 },
-    { habitId: '5', habitName: 'Deep Work', habitColor: BRAND_COLORS.primaryLight, completionRate: 0.88, currentStreak: 10, longestStreak: 15, totalCompletions: 40 },
-  ],
-  weeklyOverview: {
-    weekStart: '2024-03-18',
-    dailyRates: [0.65, 0.72, 0.68, 0.85, 0.92, 0.88, 0.95],
-    overallRate: 0.81,
-  }
-};
 
 const HeatmapCell = ({ level, colors }: { level: number; colors: any }) => {
   const cellColor = useMemo(() => {
@@ -65,7 +41,7 @@ const HeatmapCell = ({ level, colors }: { level: number; colors: any }) => {
 };
 
 const AnalyticsScreen: React.FC = () => {
-  const { colors, typography } = useTheme();
+  const { colors, typography, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const [timeRange, setTimeRange] = useState('Week');
 
@@ -85,7 +61,67 @@ const AnalyticsScreen: React.FC = () => {
   }); 
 
 
-  console.log("Analytics summary data: ", analyticsSummaryData?.data);
+  const { 
+    data: analyticsWeeklySummaryData, 
+    isLoading: analyticsWeeklySummaryLoading, 
+    isError: analyticsWeeklySummaryError, 
+    refetch: analyticsWeeklySummaryRefetch, 
+    isRefetching: analyticsWeeklySummaryIsRefetching 
+  } = useQuery({
+
+    queryKey: ['analytics-weekly-summary'],
+
+    queryFn: () => AnalyticsService.getWeeklyAnalyticsSummary(),
+
+    // staleTime: 0,
+    // gcTime: 0,
+    // refetchOnMount: true,
+    // refetchOnWindowFocus: true,
+
+  }); 
+
+
+  const { 
+    data: analyticsHeatmapSummaryData, 
+    isLoading: analyticsHeatmapSummaryLoading, 
+    isError: analyticsHeatmapSummaryError, 
+    refetch: analyticsHeatmapSummaryRefetch, 
+    isRefetching: analyticsHeatmapSummaryIsRefetching 
+  } = useQuery({
+
+    queryKey: ['analytics-heatmap-summary'],
+
+    queryFn: () => AnalyticsService.getHeatmapAnalyticsSummary(),
+
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+
+  }); 
+
+  const { 
+    data: analyticsHabitsWiseSummaryData, 
+    isLoading: analyticsHabitsWiseSummaryLoading, 
+    isError: analyticsHabitsWiseSummaryError, 
+    refetch: analyticsHabitsWiseSummaryRefetch, 
+    isRefetching: analyticsHabitsWiseSummaryIsRefetching 
+  } = useQuery({
+
+    queryKey: ['analytics-habit-wise-summary'],
+
+    queryFn: () => AnalyticsService.getHabitsWiseAnalyticsSummary(),
+
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+
+  }); 
+
+
+
+  console.log("Analytics Heatmap summary data: ", analyticsHabitsWiseSummaryData?.data);
   
 
   // const { data: analyticsData, isLoading, isError, refetch, isRefetching } = useQuery({
@@ -97,18 +133,17 @@ const AnalyticsScreen: React.FC = () => {
   // });
 
   const USE_MOCK = true; // Set to false to use real data
-  const data = MOCK_DATA;
 
   const summary = analyticsSummaryData?.data;
-  const weeklyOverview = data?.weeklyOverview;
-  const perHabit = data?.perHabit;
+  const weeklyOverview = analyticsWeeklySummaryData?.data;
+  const perHabit = analyticsHabitsWiseSummaryData?.data;
 
   const chartWidth = width - (LAYOUT.screenPaddingHorizontal * 2) - SPACING.lg * 2;
 
   const lineChartData = useMemo(() => {
     if (!weeklyOverview) return [];
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return weeklyOverview.dailyRates.map((rate: number, index: number) => ({
+    const days = ['Sun','Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    return weeklyOverview?.dailyRates?.map((rate: number, index: number) => ({
       value: Math.round(rate * 100),
       label: days[index],
     }));
@@ -142,7 +177,7 @@ const AnalyticsScreen: React.FC = () => {
       </View>
 
       {/* Time Range Selector */}
-      <View style={[styles.timeSelector, { backgroundColor: colors.surfaceAlt }]}>
+      {/* <View style={[styles.timeSelector, { backgroundColor: colors.surfaceAlt }]}>
         {['Day', 'Week', 'Month', 'Year'].map((range) => (
           <Pressable
             key={range}
@@ -162,7 +197,7 @@ const AnalyticsScreen: React.FC = () => {
             </Text>
           </Pressable>
         ))}
-      </View>
+      </View> */}
 
       <Text style={[typography.subhead, { color: colors.textSecondary, marginLeft: LAYOUT.screenPaddingHorizontal, marginBottom: SPACING.lg }]}>
         {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} Overview
@@ -178,34 +213,46 @@ const AnalyticsScreen: React.FC = () => {
           <View style={[styles.statIconContainer, { backgroundColor: colors.primaryUltraLight }]}>
             <CheckCircle size={16} color={colors.primary} />
           </View>
-          <Text style={[typography.caption1, { color: colors.textSecondary, marginTop: SPACING.sm }]}>Completion</Text>
-          <Text style={[typography.title1, { color: colors.text }]}>
-            {summary?.averageCompletionRate ? `${Math.round((summary.averageCompletionRate) * 100)}%` : '0%'}
-          </Text>
+          
+          <View style={styles.statTextContainer}>
+            <Text style={[typography.caption1, { color: colors.textSecondary, marginTop: SPACING.sm }]}>Completion</Text>
+            <Text style={[typography.title3, { color: colors.text }]}>
+              {summary?.averageCompletionRate ? `${Math.round((summary.averageCompletionRate) * 100)}%` : '0%'}
+            </Text>
+          </View>
         </View>
 
         <View style={[styles.statCard, { backgroundColor: colors.card, ...SHADOWS.sm }]}>
           <View style={[styles.statIconContainer, { backgroundColor: colors.warningLight }]}>
             <Flame size={16} color={colors.warning} />
           </View>
-          <Text style={[typography.caption1, { color: colors.textSecondary, marginTop: SPACING.sm }]}>Current Streak</Text>
-          <Text style={[typography.title1, { color: colors.text }]}>{summary?.currentOverallStreak || 0}d</Text>
+          
+          <View style={styles.statTextContainer}>
+            <Text style={[typography.caption1, { color: colors.textSecondary, marginTop: SPACING.sm }]}>Current Streak</Text>
+            <Text style={[typography.title3, { color: colors.text }]}>{summary?.currentOverallStreak || 0}d</Text>
+          </View>
         </View>
 
         <View style={[styles.statCard, { backgroundColor: colors.card, ...SHADOWS.sm }]}>
           <View style={[styles.statIconContainer, { backgroundColor: colors.infoLight }]}>
             <TrendingUp size={16} color={colors.info} />
           </View>
-          <Text style={[typography.caption1, { color: colors.textSecondary, marginTop: SPACING.sm }]}>Best Streak</Text>
-          <Text style={[typography.title1, { color: colors.text }]}>{summary?.longestOverallStreak || 0}d</Text>
+
+          <View style={styles.statTextContainer}>
+            <Text style={[typography.caption1, { color: colors.textSecondary, marginTop: SPACING.sm }]}>Best Streak</Text>
+            <Text style={[typography.title3, { color: colors.text }]}>{summary?.longestOverallStreak || 0}d</Text>
+          </View>
         </View>
 
         <View style={[styles.statCard, { backgroundColor: colors.card, ...SHADOWS.sm }]}>
           <View style={[styles.statIconContainer, { backgroundColor: colors.successLight }]}>
             <Calendar size={16} color={colors.success} />
           </View>
-          <Text style={[typography.caption1, { color: colors.textSecondary, marginTop: SPACING.sm }]}>Total Check-ins</Text>
-          <Text style={[typography.title1, { color: colors.text }]}>{summary?.totalCheckIns || 0}</Text>
+
+          <View style={styles.statTextContainer}>
+            <Text style={[typography.caption1, { color: colors.textSecondary, marginTop: SPACING.sm }]}>Total Check-ins</Text>
+            <Text style={[typography.title3, { color: colors.text }]}>{summary?.totalCheckIns || 0}</Text>
+          </View>
         </View>
       </ScrollView>
 
@@ -214,7 +261,7 @@ const AnalyticsScreen: React.FC = () => {
         <View style={styles.chartHeader}>
           <View>
             <Text style={[typography.title2, { color: colors.text }]}>Completion Trend</Text>
-            <Text style={[typography.caption1, { color: colors.textSecondary }]}>Overall progress this week</Text>
+            {/* <Text style={[typography.caption1, { color: colors.textSecondary }]}>Overall progress this week</Text> */}
           </View>
           <Info size={16} color={colors.textSecondary} />
         </View>
@@ -227,7 +274,7 @@ const AnalyticsScreen: React.FC = () => {
             width={chartWidth}
             height={160}
             spacing={chartWidth / 6.5}
-            initialSpacing={12.5}
+            initialSpacing={11}
             color={colors.primary}
             thickness={3}
             startFillColor={colors.primary}
@@ -284,8 +331,8 @@ const AnalyticsScreen: React.FC = () => {
 
         <View style={styles.heatmapWrapper}>
           <View style={styles.heatmapGrid}>
-            {Array.from({ length: 70 }).map((_, i) => (
-              <HeatmapCell key={i} level={Math.floor(Math.random() * 5)} colors={colors} />
+            {analyticsHeatmapSummaryData?.data?.map((data: any) => (
+              <HeatmapCell key={data.date} level={data.level} colors={colors} />
             ))}
           </View>
           <View style={styles.heatmapLegend}>
@@ -347,7 +394,10 @@ const AnalyticsScreen: React.FC = () => {
             xAxisThickness={0}
             hideRules
             hideYAxisText
-            xAxisLabelTextStyle={{ color: colors.textSecondary, fontSize: 10 }}
+            isAnimated
+            animationDuration={800}
+            scrollAnimation
+            xAxisLabelTextStyle={{ color: isDark ? "#FFFFFF" : colors.textSecondary, fontSize: 10 }}
             renderTooltip={(item: any) => {
               return (
                 <View style={[styles.tooltipContainer, { backgroundColor: colors.card, ...SHADOWS.md }]}>
@@ -402,10 +452,16 @@ const styles = StyleSheet.create({
     padding: SPACING.sm,
     borderRadius: RADII.sm,
   },
+  statTextContainer: {
+    flexDirection: 'row',
+    alignItems: "center",
+    justifyContent: "space-between",
+    // gap: SPACING.xs,
+  },
   chartContainer: {
     marginHorizontal: LAYOUT.screenPaddingHorizontal,
     paddingVertical: SPACING.lg,
-    paddingHorizontal: SPACING.md,
+    paddingHorizontal: SPACING.sm,
     borderRadius: RADII.xl,
   },
   chartHeader: {
@@ -430,7 +486,7 @@ const styles = StyleSheet.create({
   tooltipContainer: {
     padding: SPACING.xs,
     borderRadius: RADII.xs,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   heatmapWrapper: {
     marginTop: SPACING.md,
