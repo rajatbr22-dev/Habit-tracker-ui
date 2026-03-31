@@ -201,11 +201,11 @@ const SettingsScreen: React.FC<{navigation: any}> = ({navigation}) => {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Profile Section */}
         <View style={[styles.profileSection, {backgroundColor: colors.card}]}>
-          <View style={[styles.avatar, {backgroundColor: BRAND_COLORS.primary}]}>
+          {/* <View style={[styles.avatar, {backgroundColor: BRAND_COLORS.primary}]}>
             <Text style={[typography.title1, {color: '#FFF'}]}>
               {user?.displayName ? user.displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'AR'}
             </Text>
-          </View>
+          </View> */}
           
           <View style={styles.profileInfo}>
             {isEditing ? (
@@ -276,15 +276,15 @@ const SettingsScreen: React.FC<{navigation: any}> = ({navigation}) => {
         {/* Pro Banner */}
         <View style={[styles.proBanner, SHADOWS.md]}>
           <View style={styles.proLeft}>
-            <View style={styles.proIcon}>
+            {/* <View style={styles.proIcon}>
               <Sparkles size={24} color="#FFF" fill="#FFF" />
-            </View>
-            <View style={{marginLeft: 16}}>
+            </View> */}
+            <View style={{marginLeft: 10}}>
               <Text style={styles.proTitle}>HabitTracker Pro</Text>
               <Text style={styles.proSubtitle}>Unlimited habits & AI insights</Text>
             </View>
           </View>
-          <Pressable style={styles.manageBtn} onPress={() => navigation.navigate('Paywall')}>
+          <Pressable style={[styles.manageBtn, {marginLeft: 30}]} onPress={() => navigation.navigate('Paywall')}>
             <Text style={styles.manageBtnText}>Manage</Text>
           </Pressable>
         </View>
@@ -448,13 +448,13 @@ const styles = StyleSheet.create({
   proBanner: {
     marginHorizontal: SPACING.xl,
     marginTop: 8,
-    padding: 24,
+    padding: 15,
     borderRadius: 32,
     backgroundColor: '#7C3AED',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 0,
   },
   proLeft: {
     flexDirection: 'row',
